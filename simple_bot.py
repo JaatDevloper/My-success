@@ -1089,7 +1089,8 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     
     if not found_quiz:
         logger.warning(f"❌ Could not find active quiz for poll: {poll_id}")
-    async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """End the quiz and display results"""
     quiz = context.user_data.get('quiz', {})
     
