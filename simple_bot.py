@@ -1228,7 +1228,7 @@ async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         user_stats['total_questions'] = user_stats.get('total_questions', 0) + questions_count
         update_user_data(user_id, user_stats)
 
-    async def category_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def category_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Start a quiz from a specific category"""
     questions = load_questions()
     
