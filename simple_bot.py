@@ -135,37 +135,24 @@ def save_user_data(user_id, data):
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a stylish welcome message with interactive buttons."""
+    """Send a premium-style welcome message without borders."""
     user = update.effective_user
+
     welcome_text = (
-        "╭━━━〔 *𝘘𝘜𝘐𝘡 𝘉𝘖𝘛 𝘏𝘜𝘉* 〕━━━╮\n"
-        f"┃  🎓 Hello, *{user.first_name}*!\n"
-        "┃  Ready to boost your brainpower?\n"
-        "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n"
-        "✨ *Explore the commands below:*"
+        f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, {user.first_name}! ✨\n\n"
+        "🧠 𝗤𝘂𝗶𝘇 𝗠𝗮𝘀𝘁𝗲𝗿 𝗕𝗼𝘁 is here to challenge your brain and test your skills!\n\n"
+        "Here’s what you can do:\n\n"
+        "• ⚡ *Start a Quiz:* `/quiz`\n"
+        "• 📊 *Check Stats:* `/stats`\n"
+        "• ➕ *Add Question:* `/add`\n"
+        "• ✏️ *Edit Question:* `/edit`\n"
+        "• ❌ *Delete Question:* `/delete`\n"
+        "• 🔄 *Poll to Quiz:* `/poll2q`\n"
+        "• ℹ️ *Help & Commands:* `/help`\n\n"
+        "🔥 𝗟𝗲𝘁'𝘀 𝗴𝗼 — 𝗯𝗲𝗰𝗼𝗺𝗲 𝘁𝗵𝗲 𝗹𝗲𝗴𝗲𝗻𝗱 𝗼𝗳 𝘁𝗵𝗲 𝗹𝗲𝗮𝗱𝗲𝗿𝗯𝗼𝗮𝗿𝗱! 🏆"
     )
 
-    keyboard = [
-        [
-            InlineKeyboardButton("🎯 Start Quiz", callback_data='start_quiz'),
-            InlineKeyboardButton("📊 My Stats", callback_data='view_stats')
-        ],
-        [
-            InlineKeyboardButton("➕ Add Question", callback_data='add_question'),
-            InlineKeyboardButton("✏️ Edit Question", callback_data='edit_question')
-        ],
-        [
-            InlineKeyboardButton("🗑️ Delete Question", callback_data='delete_question'),
-            InlineKeyboardButton("🔄 Poll ➜ Quiz", callback_data='convert_poll')
-        ],
-        [
-            InlineKeyboardButton("ℹ️ Help", callback_data='help')
-        ]
-    ]
-    
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await update.message.reply_text(welcome_text, reply_markup=reply_markup, parse_mode='Markdown')
+    await update.message.reply_text(welcome_text, parse_mode='Markdown')
     
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show help message."""
