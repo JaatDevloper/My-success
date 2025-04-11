@@ -982,7 +982,7 @@ async def send_next_question(update: Update, context: ContextTypes.DEFAULT_TYPE)
     context.user_data['quiz'] = quiz
     
     # Wait for poll to close before sending next question
-    await asyncio.sleep(32)  # Wait a bit longer than poll open period
+    await asyncio.sleep(15)  # Wait a bit longer than poll open period
     
     # Get the updated quiz from context to make sure we have all participant data
     updated_quiz = context.user_data.get('quiz', {})
