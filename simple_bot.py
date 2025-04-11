@@ -1552,6 +1552,7 @@ def main() -> None:
     application.add_handler(CommandHandler("category", category_quiz))
     application.add_handler(CommandHandler("stats", stats_command))
     application.add_handler(CommandHandler("delete", delete_question))
+    application.add_handler(CommandHandler("collect", manual_collect_participants))  # New handler added here
     
     # Add conversation handler for adding questions
     add_conv_handler = ConversationHandler(
