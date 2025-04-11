@@ -998,27 +998,44 @@ async def send_next_question(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle poll answers from users"""
+    # Get the poll answer data
     answer = update.poll_answer
-    poll_id = answer.poll_id
     user = answer.user
+    poll_id = answer.poll_id
+    selected_options = answer.option_ids
     
-    logger.info(f"🔴 Poll answer received from {user.first_name} (ID: {user.id}) for poll {poll_id}")
-    logger.info(f"🔴 Selected options: {answer.option_ids}")
+    logger.info(f"Poll answer received from {user.first_name} (ID: {user.id}) for poll {poll_id}")
+    logger.info(f"Selected options: {selected_options}")
     
-    # Let's find which quiz this poll belongs to
+    # THIS IS THE KEY ISSUE: We need to find the right quiz this poll belongs to
+    # Check all user_data to find which quiz contains this poll
+    found_quiz = False
+    quiz_data = None
+    quiz_owner_id = None
+    
+    # Important: We must loop through ALL user data to find the quiz
     for user_id, user_data in context.dispatcher.user_data.items():
+        if 'quiz' not in user_data:
+            continue
+            
         quiz = user_data.get('quiz', {})
-        
         if not quiz.get('active', False):
             continue
             
+        # Check if this quiz contains our poll
         sent_polls = quiz.get('sent_polls', {})
+        
+        # Check both string and integer poll IDs
         if poll_id in sent_polls or str(poll_id) in sent_polls:
-            # This quiz contains the poll that was answered
-            poll_key = poll_id if poll_id in sent_polls else str(poll_id)
-            poll_info = sent_polls[poll_key]
+            found_quiz = True
+            quiz_data = quiz
+            quiz_owner_id = user_id
             
-            # Get the question for this poll
+            # Get poll metadata
+            poll_key = poll_id if poll_id in sent_polls else str(poll_id)
+            poll_info = sent_polls.get(poll_key, {})
+            
+            # Get question info
             question_index = poll_info.get('question_index', 0)
             questions = quiz.get('questions', [])
             
@@ -1026,26 +1043,27 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 question = questions[question_index]
                 correct_answer = question.get('answer', 0)
                 
-                # Record this answer in the poll_info
+                # Initialize poll answers if needed
                 if 'answers' not in poll_info:
                     poll_info['answers'] = {}
                     
+                # Record this answer
                 is_correct = False
-                if answer.option_ids and len(answer.option_ids) > 0:
-                    is_correct = answer.option_ids[0] == correct_answer
-                
-                # Store the answer details
+                if selected_options and len(selected_options) > 0:
+                    is_correct = selected_options[0] == correct_answer
+                    
                 poll_info['answers'][str(user.id)] = {
                     'user_name': user.first_name,
                     'username': user.username,
-                    'option_id': answer.option_ids[0] if answer.option_ids else None,
+                    'option_id': selected_options[0] if selected_options else None,
                     'is_correct': is_correct
                 }
                 
-                # Update participant records
+                # Make sure we have participants dict
                 if 'participants' not in quiz:
                     quiz['participants'] = {}
                     
+                # Add or update this participant
                 if str(user.id) not in quiz['participants']:
                     quiz['participants'][str(user.id)] = {
                         'name': user.first_name,
@@ -1055,21 +1073,27 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     }
                 
                 # Update participant stats
-                quiz['participants'][str(user.id)]['answered'] += 1
+                participant = quiz['participants'][str(user.id)]
+                participant['answered'] += 1
                 if is_correct:
-                    quiz['participants'][str(user.id)]['correct'] += 1
-                
+                    participant['correct'] += 1
+                    
                 # Save everything back
                 sent_polls[poll_key] = poll_info
                 quiz['sent_polls'] = sent_polls
+                quiz['participants'] = quiz['participants']  # Ensure this gets stored
+                
+                # This is critical: save back to the correct user's data
                 user_data['quiz'] = quiz
                 context.dispatcher.user_data[user_id] = user_data
                 
-                logger.info(f"Quiz data updated for user {user.first_name}")
-                logger.info(f"Current participants: {quiz['participants']}")
-                
-                # We found the quiz, no need to check others
+                # Debug logging
+                logger.info(f"✅ Updated quiz for user {user_id}")
+                logger.info(f"✅ Participants now: {quiz['participants']}")
                 break
+    
+    if not found_quiz:
+        logger.warning(f"❌ Could not find quiz for poll {poll_id}")
 
 async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """End the quiz and display results"""
