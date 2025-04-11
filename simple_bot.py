@@ -1001,100 +1001,73 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     answer = update.poll_answer
     poll_id = answer.poll_id
     user = answer.user
-    
-    logger.info(f"Poll answer received from user {user.first_name} (ID: {user.id}) for poll {poll_id}")
-    
-    # Try to find the active quiz in user data
+
+    logger.info(f"Poll answer from {user.first_name} (ID: {user.id}) for poll {poll_id}")
+
+    # Search all active quizzes for matching poll
     active_quiz = None
     active_context = None
-    found_user_id = None
-    
-    # IMPORTANT: Find all active quizzes regardless of which user started them
-    logger.info(f"Searching for active quiz with poll {poll_id}")
-    all_user_data_keys = list(context.dispatcher.user_data.keys())
-    logger.info(f"Available user_data keys: {all_user_data_keys}")
-    
-    # Check all user data for the active quiz with this poll
     for user_id, user_data in context.dispatcher.user_data.items():
-        if 'quiz' in user_data and user_data['quiz'].get('active', False):
-            quiz = user_data['quiz']
-            logger.info(f"Found active quiz for user {user_id}, checking for poll {poll_id}")
-            sent_polls = quiz.get('sent_polls', {})
-            sent_poll_keys = list(sent_polls.keys())
-            logger.info(f"Quiz sent_polls keys: {sent_poll_keys}")
-            
-            # Check the poll ID with both string and regular format
-            if str(poll_id) in sent_polls:
-                active_quiz = quiz
-                active_context = user_data
-                found_user_id = user_id
-                logger.info(f"Found matching poll in quiz: {poll_id}")
-                break
-    
-    if not active_quiz:
-        logger.warning(f"Received answer for unknown poll: {poll_id}")
-        return
-    
-    # Get the poll details
-    poll_info = active_quiz['sent_polls'].get(str(poll_id), {})
-    question_index = poll_info.get('question_index', 0)
-    
-    # Get the question to check the correct answer
-    questions = active_quiz.get('questions', [])
-    if question_index < len(questions):
-        question = questions[question_index]
-        correct_answer = question.get('answer', 0)
-        
-        # Record the user's answer
-        user_id = user.id
-        user_name = user.first_name
-        
-        # Ensure participants dictionary exists
-        if 'participants' not in active_quiz:
-            active_quiz['participants'] = {}
-            
-        # Initialize user in participants if not already there
-        if user_id not in active_quiz.get('participants', {}):
-            active_quiz['participants'][user_id] = {
-                'name': user_name,
-                'username': user.username,
-                'correct': 0,
-                'answered': 0
-            }
-        
-        # Record the answer with detailed logging
-        logger.info(f"Before recording answer: Participant data: {active_quiz.get('participants', {})}")
-        active_quiz['participants'][user_id]['answered'] += 1
-        if answer.option_ids and answer.option_ids[0] == correct_answer:
-            active_quiz['participants'][user_id]['correct'] += 1
-        
-        # Ensure answers dictionary exists in poll_info
-        if 'answers' not in poll_info:
-            poll_info['answers'] = {}
-        
-        # Update the quiz data
-        poll_info['answers'][user_id] = {
-            'option_id': answer.option_ids[0] if answer.option_ids else None,
-            'is_correct': answer.option_ids and answer.option_ids[0] == correct_answer,
-            'user_name': user_name,  # Store user's name with the answer
-            'username': user.username  # Store username too
-        }
-        active_quiz['sent_polls'][str(poll_id)] = poll_info
-        
-        # Make sure the current participant info is properly stored
-        logger.info(f"Recording answer for user: {user_name} (ID: {user_id})")
-        logger.info(f"After recording answer: Participant data: {active_quiz.get('participants', {})}")
-        
-        # Update user context
-        active_context['quiz'] = active_quiz
-        
-        # Update user statistics
-        user_data = get_user_data(user_id)
-        user_data['total_answers'] = user_data.get('total_answers', 0) + 1
-        if answer.option_ids and answer.option_ids[0] == correct_answer:
-            user_data['correct_answers'] = user_data.get('correct_answers', 0) + 1
-        update_user_data(user_id, user_data)
+        quiz = user_data.get("quiz", {})
+        if quiz.get("active") and str(poll_id) in quiz.get("sent_polls", {}):
+            active_quiz = quiz
+            active_context = user_data
+            break
 
+    if not active_quiz:
+        logger.warning(f"No active quiz found for poll ID {poll_id}")
+        return
+
+    poll_info = active_quiz["sent_polls"][str(poll_id)]
+    question_index = poll_info.get("question_index", 0)
+    questions = active_quiz.get("questions", [])
+    if question_index >= len(questions):
+        logger.warning(f"Invalid question index {question_index}")
+        return
+
+    question = questions[question_index]
+    correct_answer = question.get("answer", 0)
+
+    user_id = user.id
+    user_name = user.first_name
+
+    if "participants" not in active_quiz:
+        active_quiz["participants"] = {}
+    if user_id not in active_quiz["participants"]:
+        active_quiz["participants"][user_id] = {
+            "name": user_name,
+            "username": user.username,
+            "correct": 0,
+            "answered": 0
+        }
+
+    # Update answer counts
+    active_quiz["participants"][user_id]["answered"] += 1
+    is_correct = answer.option_ids and answer.option_ids[0] == correct_answer
+    if is_correct:
+        active_quiz["participants"][user_id]["correct"] += 1
+
+    # Save the answer in sent_polls
+    if "answers" not in poll_info:
+        poll_info["answers"] = {}
+    poll_info["answers"][str(user_id)] = {
+        "option_id": answer.option_ids[0] if answer.option_ids else None,
+        "is_correct": is_correct,
+        "user_name": user_name,
+        "username": user.username
+    }
+
+    # Store back updated poll_info and quiz
+    active_quiz["sent_polls"][str(poll_id)] = poll_info
+    active_context["quiz"] = active_quiz
+
+    # Update user stats
+    user_data = get_user_data(user_id)
+    user_data["total_answers"] = user_data.get("total_answers", 0) + 1
+    if is_correct:
+        user_data["correct_answers"] = user_data.get("correct_answers", 0) + 1
+    update_user_data(user_id, user_data)
+    
 async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """End the quiz and display results"""
     quiz = context.user_data.get('quiz', {})
