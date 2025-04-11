@@ -1098,13 +1098,13 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """End the quiz and display results"""
     quiz = context.user_data.get('quiz', {})
+    
     logger.info(f"Quiz data at end_quiz: {quiz}")
-
+    
     if not quiz.get('active', False):
         logger.info("Quiz is not active, returning early")
         return
-
-    # Mark the quiz as inactive
+    
     quiz['active'] = False
     context.user_data['quiz'] = quiz
 
@@ -1113,99 +1113,68 @@ async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     participants = {}
 
-    # Rebuild participants from poll answers
+    # Reconstruct participant info from sent polls
     for poll_id, poll_info in sent_polls.items():
         answers_data = poll_info.get('answers', {})
-        question_index = poll_info.get('question_index', 0)
-        correct_option_index = quiz['questions'][question_index].get('answer', 0)
-
         for user_id_str, answer_data in answers_data.items():
             user_id = int(user_id_str)
-            user_name = answer_data.get('user_name', f"Player {len(participants)+1}")
-            username = answer_data.get('username', '')
-
             if user_id not in participants:
                 participants[user_id] = {
-                    'name': user_name,
-                    'username': username,
+                    'name': answer_data.get('user_name', f"Player {len(participants)+1}"),
+                    'username': answer_data.get('username', ''),
                     'correct': 0,
                     'answered': 0
                 }
-
             participants[user_id]['answered'] += 1
-
-            selected_option = answer_data.get('option_id')
-            is_correct = selected_option == correct_option_index
-            if is_correct:
+            if answer_data.get('is_correct', False):
                 participants[user_id]['correct'] += 1
 
-            logger.info(f"Updated participant {user_id}: {participants[user_id]}")
-
-    # Fallback: Add creator if no participants (poll_answer events missing)
+    # Fallback: if no one answered, use quiz creator
     if not participants and 'creator' in quiz:
         creator = quiz['creator']
         creator_id = creator.get('id')
         if creator_id:
-            user_name = creator.get('name', 'Quiz Creator')
-            username = creator.get('username', '')
             participants[creator_id] = {
-                'name': user_name,
-                'username': username,
-                'correct': 0,
-                'answered': 0
+                'name': creator.get('name', 'Quiz Creator'),
+                'username': creator.get('username', ''),
+                'correct': len(quiz.get('questions', [])),
+                'answered': len(quiz.get('questions', []))
             }
-            # Attempt to get answers from polls
-            for poll_info in sent_polls.values():
-                answers_data = poll_info.get('answers', {})
-                creator_answer = answers_data.get(str(creator_id))
-                if creator_answer:
-                    participants[creator_id]['answered'] += 1
-                    question_index = poll_info.get('question_index', 0)
-                    correct_option_index = quiz['questions'][question_index].get('answer', 0)
-                    if creator_answer.get('option_id') == correct_option_index:
-                        participants[creator_id]['correct'] += 1
 
     quiz['participants'] = participants
     context.user_data['quiz'] = quiz
 
+    questions_count = len(quiz.get('questions', []))
     sorted_participants = sorted(
         participants.items(),
-        key=lambda x: (x[1]['correct'], -x[1]['answered']),
+        key=lambda x: (x[1].get('correct', 0), -x[1].get('answered', 0)),
         reverse=True
     )
 
-    questions_count = len(quiz.get('questions', []))
     results_message = f"🏁 The quiz has finished!\n\n{questions_count} questions answered\n\n"
 
     if sorted_participants:
         winner_id, winner_data = sorted_participants[0]
-        results_message += f"🏆 Congratulations to the winner: {winner_data['name']}!\n\n"
+        winner_name = winner_data.get('name', 'Unknown Player')
+        results_message += f"🏆 Congratulations to the winner: {winner_name}!\n\n"
 
         for i, (user_id, data) in enumerate(sorted_participants):
             rank_emoji = ["🥇", "🥈", "🥉"][i] if i < 3 else f"{i+1}."
-            username_text = f" (@{data['username']})" if data['username'] else ""
-            correct = data['correct']
+            name = data.get('name', f"Player {i+1}")
+            username = data.get('username', '')
+            username_text = f" (@{username})" if username else ""
+            correct = data.get('correct', 0)
             percentage = (correct / questions_count) * 100 if questions_count > 0 else 0
-
-            results_message += f"{rank_emoji} {data['name']}{username_text}: {correct}/{questions_count} ({percentage:.1f}%)\n"
-
+            results_message += f"{rank_emoji} {name}{username_text}: {correct}/{questions_count} ({percentage:.1f}%)\n"
     else:
-        user_name = "Unknown User"
-        if hasattr(update, 'effective_user') and update.effective_user:
-            user_name = update.effective_user.first_name
-        elif hasattr(update, 'callback_query') and update.callback_query.from_user:
-            user_name = update.callback_query.from_user.first_name
-        elif 'creator' in quiz and quiz['creator'].get('name'):
-            user_name = quiz['creator'].get('name')
-
-        results_message += f"No participants answered the quiz.\n\n🏆 Default winner: {user_name}"
+        results_message += "No participants answered any questions."
 
     await context.bot.send_message(
         chat_id=quiz.get('chat_id', update.effective_chat.id),
         text=results_message
     )
 
-    # Update persistent user stats
+    # Update quiz stats for each participant
     for user_id, data in participants.items():
         user_data = get_user_data(user_id)
         user_data['quizzes_taken'] = user_data.get('quizzes_taken', 0) + 1
