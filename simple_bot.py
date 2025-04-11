@@ -8,6 +8,8 @@ import asyncio
 import logging
 import re
 import requests
+from telegram import Update
+from telegram.ext import ContextTypes
 from urllib.parse import urlparse
 from telegram import Update, Poll, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
