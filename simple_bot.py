@@ -133,28 +133,29 @@ def save_user_data(user_id, data):
         logger.error(f"Error saving user data: {e}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a stylish welcome message when the command /start is issued."""
+    """Send a stylish and emoji-rich welcome message when the command /start is issued."""
     user = update.effective_user
     welcome_text = (
-        "╭━━━━━━━[ 𝙌𝙐𝙄𝙕 𝘽𝙊𝙏 ]━━━━━━━╮\n"
-        f"┃   𝙒𝙚𝙡𝙘𝙤𝙢𝙚, 𝘿𝙚𝙖𝙧 *{user.first_name}*!    \n"
-        "┃   𝙄'𝙢 𝙝𝙚𝙧𝙚 𝙩𝙤 𝙩𝙚𝙨𝙩 𝙮𝙤𝙪𝙧 𝙠𝙣𝙤𝙬𝙡𝙚𝙙𝙜𝙚! \n"
-        "╰━━━━━━━━━━━━━━━━━━━━━━╯\n\n"
-        "✦ *Main Features:*\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "🔹 /quiz – 𝙎𝙩𝙖𝙧𝙩 𝙖 𝙣𝙚𝙬 𝙦𝙪𝙞𝙯 (auto-mode)\n"
-        "🔹 /stats – 𝙑𝙞𝙚𝙬 𝙮𝙤𝙪𝙧 𝙦𝙪𝙞𝙯 𝙥𝙚𝙧𝙛𝙤𝙧𝙢𝙖𝙣𝙘𝙚\n"
-        "🔹 /add – 𝘼𝙙𝙙 𝙖 𝙣𝙚𝙬 𝙦𝙪𝙚𝙨𝙩𝙞𝙤𝙣\n"
-        "🔹 /edit – 𝙀𝙙𝙞𝙩 𝙖𝙣 𝙚𝙭𝙞𝙨𝙩𝙞𝙣𝙜 𝙦𝙪𝙚𝙨𝙩𝙞𝙤𝙣\n"
-        "🔹 /delete – 𝘿𝙚𝙡𝙚𝙩𝙚 𝙖 𝙦𝙪𝙚𝙨𝙩𝙞𝙤𝙣\n"
-        "🔹 /poll2q – 𝘾𝙤𝙣𝙫𝙚𝙧𝙩 𝙖 𝙥𝙤𝙡𝙡 𝙩𝙤 𝙖 𝙦𝙪𝙞𝙯\n"
-        "🔹 /help – 𝙂𝙚𝙩 𝙖𝙡𝙡 𝙘𝙤𝙢𝙢𝙖𝙣𝙙𝙨\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        "➤ 𝙇𝙚𝙩'𝙨 𝙜𝙚𝙩 𝙨𝙩𝙖𝙧𝙩𝙚𝙙 𝙖𝙣𝙙 𝙝𝙖𝙫𝙚 𝙨𝙤𝙢𝙚 𝙛𝙪𝙣!"
+        "╭━━━【 𝑾𝑬𝑳𝑪𝑶𝑴𝑬 𝑻𝑶 𝑸𝑼𝑰𝒁 𝑩𝑶𝑻 】━━━╮\n"
+        f"┃   🌟 Hello, *{user.first_name}*! 🌟\n"
+        "┃   🧠 Ready to challenge your brain?\n"
+        "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n"
+        
+        "✨ *Features You Can Explore:*\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "▶️  /quiz – 🎯 *Start a new quiz*\n"
+        "📈  /stats – 📊 *Check your progress*\n"
+        "➕  /add – ✍️ *Add a custom question*\n"
+        "🛠️  /edit – 📝 *Modify a quiz question*\n"
+        "🗑️  /delete – ❌ *Remove a question*\n"
+        "⚙️  /poll2q – 🔄 *Convert a poll to quiz*\n"
+        "ℹ️  /help – 📚 *Full command guide*\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        
+        "🚀 *Let’s dive in and test your genius!*"
     )
     await update.message.reply_text(welcome_text, parse_mode='Markdown')
     
-
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show help message."""
     await start(update, context)
