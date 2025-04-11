@@ -966,7 +966,7 @@ async def send_next_question(update: Update, context: ContextTypes.DEFAULT_TYPE)
         correct_option_id=question.get("answer", 0),
         is_anonymous=False,
         explanation=f"Question {current_index + 1} of {len(questions)}",
-        open_period=30,  # 30 seconds to answer
+        open_period=15,  # 30 seconds to answer
     )
     
     # Store the poll details
