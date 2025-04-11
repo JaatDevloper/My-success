@@ -133,12 +133,12 @@ def save_user_data(user_id, data):
         logger.error(f"Error saving user data: {e}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a professional welcome message with stylish font and no borders."""
+    """Send a premium-style welcome message without borders."""
     user = update.effective_user
 
     welcome_text = (
-        f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, {user.first_name}! ✨\n\n"
-        "🧠 𝗤𝘂𝗶𝘇 𝗠𝗮𝘀𝘁𝗲𝗿 𝗕𝗼𝘁 is here to challenge your brain and test your skills!\n\n"
+        f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, [{user.first_name}](tg://user?id={user.id})! ✨\n\n"
+        "🧠 *𝗤𝘂𝗶𝘇 𝗠𝗮𝘀𝘁𝗲𝗿 𝗕𝗼𝘁* 𝗂𝗌 𝗁𝖾𝗋𝖾 𝗍𝗈 𝖼𝗁𝖺𝗅𝗅𝖾𝗇𝗀𝖾 𝗒𝗈𝗎𝗋 𝖻𝗋𝖺𝗂𝗇 𝖺𝗇𝖽 𝗍𝖾𝗌𝗍 𝗒𝗈𝗎𝗋 𝗌𝗄𝗂𝗅𝗅𝗌!\n\n"
         "Here’s what you can do:\n\n"
         "• ⚡ *Start a Quiz:* `/quiz`\n"
         "• 📊 *Check Stats:* `/stats`\n"
@@ -147,11 +147,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• ❌ *Delete Question:* `/delete`\n"
         "• 🔄 *Poll to Quiz:* `/poll2q`\n"
         "• ℹ️ *Help & Commands:* `/help`\n\n"
-        "🔥 𝗟𝗲𝘁'𝘀 𝗴𝗼 — 𝗯𝗲𝗰𝗼𝗺𝗲 𝘁𝗵𝗲 𝗹𝗲𝗴𝗲𝗻𝗱 𝗼𝗳 𝘁𝗵𝗲 𝗹𝗲𝗮𝗱𝗲𝗿𝗯𝗼𝗮𝗿𝗱! 🏆\n\n"
-        "<b>👨‍💻 Developer:</b> <a href='https://t.me/JaatCoderX'>@JaatCoderX</a>"
+        "🔥 *Let’s go — become the legend of the leaderboard!* 🏆"
     )
 
-    await update.message.reply_text(welcome_text, parse_mode='HTML')
+    await update.message.reply_text(welcome_text, parse_mode='Markdown')
     
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show help message."""
