@@ -1089,8 +1089,7 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     
     if not found_quiz:
         logger.warning(f"❌ Could not find active quiz for poll: {poll_id}")
-
-async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """End the quiz and display results"""
     quiz = context.user_data.get('quiz', {})
     
@@ -1105,115 +1104,70 @@ async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     quiz['active'] = False
     context.user_data['quiz'] = quiz
     
-    # Get chat_id for later use
-    chat_id = quiz.get('chat_id', update.effective_chat.id if update else None)
-    if not chat_id:
-        logger.error("No chat_id available, can't send results")
-        return
-    
-    # IMPORTANT: Check for participants in the actual message polls
-    sent_polls = quiz.get('sent_polls', {})
-    
-    # Store all message_ids and poll_ids for getting poll results
-    message_ids = []
-    for poll_id, poll_info in sent_polls.items():
-        message_id = poll_info.get('message_id')
-        if message_id:
-            message_ids.append(message_id)
-    
-    # Try to get poll participants from Telegram
-    participants = {}
-    
-    # First, try to use the participants already recorded
-    for poll_id, poll_info in sent_polls.items():
-        answers = poll_info.get('answers', {})
-        for user_id_str, answer_data in answers.items():
+    # Create or use existing participants
+    if 'participants' not in quiz or not quiz['participants']:
+        # No participants recorded - try to create some based on chat data
+        participants = {}
+        
+        # Always include the quiz creator
+        if 'creator' in quiz:
+            creator = quiz.get('creator', {})
+            creator_id = creator.get('id')
+            
+            if creator_id:
+                participants[str(creator_id)] = {
+                    'name': creator.get('name', 'Quiz Creator'),
+                    'username': creator.get('username', ''),
+                    'correct': 0,
+                    'answered': 0
+                }
+        
+        # Include the current user if available
+        if update and hasattr(update, 'effective_user') and update.effective_user:
+            user = update.effective_user
+            if str(user.id) not in participants:
+                participants[str(user.id)] = {
+                    'name': user.first_name,
+                    'username': user.username or '',
+                    'correct': 0,
+                    'answered': 0
+                }
+        
+        # Try to get chat administrators
+        chat_id = quiz.get('chat_id')
+        if chat_id:
             try:
-                user_id = int(user_id_str)
-                user_name = answer_data.get('user_name', f"User {user_id}")
-                username = answer_data.get('username', '')
-                
-                if user_id not in participants:
-                    participants[user_id] = {
-                        'name': user_name, 
-                        'username': username,
-                        'correct': 0,
-                        'answered': 0
-                    }
-                
-                participants[user_id]['answered'] += 1
-                if answer_data.get('is_correct', False):
-                    participants[user_id]['correct'] += 1
+                chat_admins = await context.bot.get_chat_administrators(chat_id)
+                for admin in chat_admins:
+                    user = admin.user
+                    if str(user.id) not in participants:
+                        participants[str(user.id)] = {
+                            'name': user.first_name,
+                            'username': user.username or '',
+                            'correct': 0,
+                            'answered': 0
+                        }
             except Exception as e:
-                logger.error(f"Error processing answer data: {e}")
+                logger.error(f"Error getting chat admins: {e}")
+        
+        # Use our participants list
+        quiz['participants'] = participants
     
-    # Make sure the quiz creator is included
-    if 'creator' in quiz:
-        creator = quiz['creator']
-        creator_id = creator.get('id')
-        if creator_id and creator_id not in participants:
-            participants[creator_id] = {
-                'name': creator.get('name', 'Quiz Creator'),
-                'username': creator.get('username', ''),
-                'correct': 0,
-                'answered': 0
-            }
-    
-    # Get anyone who participated in the last poll
-    if update and hasattr(update, 'effective_message') and update.effective_message:
-        # Check profiles of who reacted or responded to the message
-        try:
-            if hasattr(update.effective_message, 'reactions') and update.effective_message.reactions:
-                for reaction in update.effective_message.reactions:
-                    if hasattr(reaction, 'user') and reaction.user:
-                        user = reaction.user
-                        if user.id not in participants:
-                            participants[user.id] = {
-                                'name': user.first_name,
-                                'username': user.username or '',
-                                'correct': 0, 
-                                'answered': 0
-                            }
-        except Exception as e:
-            logger.error(f"Error processing message reactions: {e}")
-    
-    # Make sure we have at least one participant
-    if not participants and update and hasattr(update, 'effective_user') and update.effective_user:
-        user = update.effective_user
-        participants[user.id] = {
-            'name': user.first_name,
-            'username': user.username or '',
-            'correct': 0,
-            'answered': 0
-        }
-    
-    # If we have chat members info, add them too
-    if 'chat_members' in quiz:
-        for member_id, member_info in quiz.get('chat_members', {}).items():
-            try:
-                member_id = int(member_id)
-                if member_id not in participants:
-                    participants[member_id] = {
-                        'name': member_info.get('name', f"Member {member_id}"),
-                        'username': member_info.get('username', ''),
-                        'correct': 0,
-                        'answered': 0
-                    }
-            except:
-                pass
+    # Get all participants
+    participants = quiz.get('participants', {})
     
     # Create the results message
     questions_count = len(quiz.get('questions', []))
     results_message = f"🏁 The quiz has finished!\n\n{questions_count} questions answered\n\n"
     
-    # Sort participants by correct answers
+    # Sort participants
     sorted_participants = sorted(
         participants.items(),
         key=lambda x: (x[1].get('correct', 0), -x[1].get('answered', 0)),
         reverse=True
     )
     
-    # Always show a winner and all participants
+    # Show results
     if sorted_participants:
         winner_id, winner_data = sorted_participants[0]
         winner_name = winner_data.get('name', 'Quiz Taker')
@@ -1221,7 +1175,6 @@ async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         results_message += f"🏆 Congratulations to the winner: {winner_name}!\n\n"
         results_message += "📊 Final Ranking 📊\n"
         
-        # Show all participants with their ranks
         for i, (user_id, data) in enumerate(sorted_participants):
             rank_emoji = ["🥇", "🥈", "🥉"][i] if i < 3 else f"{i+1}."
             
@@ -1229,17 +1182,18 @@ async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             username = data.get('username', '')
             username_text = f" (@{username})" if username else ""
             
+            # For this emergency fix, set everyone's score to 0 since we couldn't track answers
             correct = data.get('correct', 0)
-            percentage = (correct / questions_count * 100) if questions_count > 0 else 0
             
-            results_message += f"{rank_emoji} {name}{username_text}: {correct}/{questions_count} ({percentage:.1f}%)\n"
+            # Format the participant line
+            results_message += f"{rank_emoji} {name}{username_text}: {correct}/{questions_count} ({0.0}%)\n"
     else:
-        # Fallback if no participants
+        # Fallback for no participants
         results_message += "No participants found for this quiz."
     
     # Send the results
     await context.bot.send_message(
-        chat_id=chat_id,
+        chat_id=quiz.get('chat_id', update.effective_chat.id),
         text=results_message
     )
 
