@@ -135,7 +135,7 @@ def save_user_data(user_id, data):
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a professional welcome message with clickable user name and stylish formatting."""
+    """Send a stylish welcome message with clickable user name and dev credit."""
     user = update.effective_user
     user_mention = f"<a href='tg://user?id={user.id}'>{user.first_name}</a>"
 
@@ -143,18 +143,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, {user_mention}! ✨\n\n"
         "🧠 𝗤𝘂𝗶𝘇 𝗠𝗮𝘀𝘁𝗲𝗿 𝗕𝗼𝘁 is here to challenge your brain and test your skills!\n\n"
         "Here’s what you can do:\n\n"
-        "• ⚡ *Start a Quiz:* `/quiz`\n"
-        "• 📊 *Check Stats:* `/stats`\n"
-        "• ➕ *Add Question:* `/add`\n"
-        "• ✏️ *Edit Question:* `/edit`\n"
-        "• ❌ *Delete Question:* `/delete`\n"
-        "• 🔄 *Poll to Quiz:* `/poll2q`\n"
-        "• ℹ️ *Help & Commands:* `/help`\n\n"
+        "• ⚡ <b>Start a Quiz:</b> /quiz\n"
+        "• 📊 <b>Check Stats:</b> /stats\n"
+        "• ➕ <b>Add Question:</b> /add\n"
+        "• ✏️ <b>Edit Question:</b> /edit\n"
+        "• ❌ <b>Delete Question:</b> /delete\n"
+        "• 🔄 <b>Poll to Quiz:</b> /poll2q\n"
+        "• ℹ️ <b>Help & Commands:</b> /help\n\n"
         "🔥 𝗟𝗲𝘁'𝘀 𝗴𝗼 — 𝗯𝗲𝗰𝗼𝗺𝗲 𝘁𝗵𝗲 𝗹𝗲𝗴𝗲𝗻𝗱 𝗼𝗳 𝘁𝗵𝗲 𝗹𝗲𝗮𝗱𝗲𝗿𝗯𝗼𝗮𝗿𝗱! 🏆\n\n"
-        "<b>👨‍💻 Developer:</b> <a href='https://t.me/JaatCoderX'>@JaatCoderX</a>"
+        "<b><i>👨‍💻 Developer: @JaatCoderX</i></b>"
     )
 
-    await update.message.reply_text(welcome_text, parse_mode='HTML')
+    await update.message.reply_text(welcome_text, parse_mode='HTML', disable_web_page_preview=True)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show help message."""
