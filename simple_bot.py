@@ -1086,55 +1086,6 @@ async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     quiz['active'] = False
     context.user_data['quiz'] = quiz
     
-    # Create or use existing participants
-    if 'participants' not in quiz or not quiz['participants']:
-        # No participants recorded - try to create some based on chat data
-        participants = {}
-        
-        # Always include the quiz creator
-        if 'creator' in quiz:
-            creator = quiz.get('creator', {})
-            creator_id = creator.get('id')
-            
-            if creator_id:
-                participants[str(creator_id)] = {
-                    'name': creator.get('name', 'Quiz Creator'),
-                    'username': creator.get('username', ''),
-                    'correct': 0,
-                    'answered': 0
-                }
-        
-        # Include the current user if available
-        if update and hasattr(update, 'effective_user') and update.effective_user:
-            user = update.effective_user
-            if str(user.id) not in participants:
-                participants[str(user.id)] = {
-                    'name': user.first_name,
-                    'username': user.username or '',
-                    'correct': 0,
-                    'answered': 0
-                }
-        
-        # Try to get chat administrators
-        chat_id = quiz.get('chat_id')
-        if chat_id:
-            try:
-                chat_admins = await context.bot.get_chat_administrators(chat_id)
-                for admin in chat_admins:
-                    user = admin.user
-                    if str(user.id) not in participants:
-                        participants[str(user.id)] = {
-                            'name': user.first_name,
-                            'username': user.username or '',
-                            'correct': 0,
-                            'answered': 0
-                        }
-            except Exception as e:
-                logger.error(f"Error getting chat admins: {e}")
-        
-        # Use our participants list
-        quiz['participants'] = participants
-    
     # Get all participants
     participants = quiz.get('participants', {})
     
@@ -1142,9 +1093,17 @@ async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     questions_count = len(quiz.get('questions', []))
     results_message = f"🏁 The quiz has finished!\n\n{questions_count} questions answered\n\n"
     
-    # Sort participants
+    # Filter out bots and sort participants
+    filtered_participants = {}
+    for user_id, data in participants.items():
+        # Skip entries that might be bots
+        username = data.get('username', '')
+        if username and username.lower().endswith('_bot'):
+            continue
+        filtered_participants[user_id] = data
+    
     sorted_participants = sorted(
-        participants.items(),
+        filtered_participants.items(),
         key=lambda x: (x[1].get('correct', 0), -x[1].get('answered', 0)),
         reverse=True
     )
@@ -1164,11 +1123,11 @@ async def end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             username = data.get('username', '')
             username_text = f" (@{username})" if username else ""
             
-            # For this emergency fix, set everyone's score to 0 since we couldn't track answers
             correct = data.get('correct', 0)
+            percentage = (correct / questions_count * 100) if questions_count > 0 else 0
             
-            # Format the participant line
-            results_message += f"{rank_emoji} {name}{username_text}: {correct}/{questions_count} ({0.0}%)\n"
+            # Format the participant line with proper percentage
+            results_message += f"{rank_emoji} {name}{username_text}: {correct}/{questions_count} ({percentage:.1f}%)\n"
     else:
         # Fallback for no participants
         results_message += "No participants found for this quiz."
