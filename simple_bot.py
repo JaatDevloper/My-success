@@ -1197,6 +1197,62 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         text=results_message
     )
 
+async def manual_collect_participants(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Manually collect participants who have answered polls"""
+    if update.effective_chat.type not in ['group', 'supergroup']:
+        await update.message.reply_text("This command can only be used in groups")
+        return
+    
+    quiz = context.user_data.get('quiz', {})
+    if not quiz.get('active', False):
+        await update.message.reply_text("No active quiz to collect participants for")
+        return
+    
+    # Get the chat members who are in the chat
+    chat_id = update.effective_chat.id
+    
+    try:
+        # Try to get chat administrators first (they're likely to be participants)
+        chat_admins = await context.bot.get_chat_administrators(chat_id)
+        
+        # Initialize participants if needed
+        if 'participants' not in quiz:
+            quiz['participants'] = {}
+        
+        # Add all admins to participants
+        for admin in chat_admins:
+            user = admin.user
+            user_id = user.id
+            
+            if str(user_id) not in quiz['participants']:
+                quiz['participants'][str(user_id)] = {
+                    'name': user.first_name,
+                    'username': user.username or '',
+                    'correct': 0,
+                    'answered': 0
+                }
+        
+        # Also add the message sender
+        if update.effective_user and str(update.effective_user.id) not in quiz['participants']:
+            user = update.effective_user
+            quiz['participants'][str(user.id)] = {
+                'name': user.first_name,
+                'username': user.username or '',
+                'correct': 0,
+                'answered': 0
+            }
+        
+        # Update user data
+        context.user_data['quiz'] = quiz
+        
+        await update.message.reply_text(
+            f"✅ Collected {len(quiz['participants'])} potential participants. "
+            "Use /endquiz to finish the quiz and see results."
+        )
+    except Exception as e:
+        logger.error(f"Error collecting participants: {e}")
+        await update.message.reply_text(f"Error collecting participants: {str(e)}")
+
 async def category_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Start a quiz from a specific category"""
     questions = load_questions()
