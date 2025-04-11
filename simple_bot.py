@@ -132,29 +132,40 @@ def save_user_data(user_id, data):
     except Exception as e:
         logger.error(f"Error saving user data: {e}")
 
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a stylish and emoji-rich welcome message when the command /start is issued."""
+    """Send a stylish welcome message with interactive buttons."""
     user = update.effective_user
     welcome_text = (
-        "╭━━━【 𝑾𝑬𝑳𝑪𝑶𝑴𝑬 𝑻𝑶 𝑸𝑼𝑰𝒁 𝑩𝑶𝑻 】━━━╮\n"
-        f"┃   🌟 Hello, *{user.first_name}*! 🌟\n"
-        "┃   🧠 Ready to challenge your brain?\n"
+        "╭━━━〔 *𝘘𝘜𝘐𝘡 𝘉𝘖𝘛 𝘏𝘜𝘉* 〕━━━╮\n"
+        f"┃  🎓 Hello, *{user.first_name}*!\n"
+        "┃  Ready to boost your brainpower?\n"
         "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n"
-        
-        "✨ *Features You Can Explore:*\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "▶️  /quiz – 🎯 *Start a new quiz*\n"
-        "📈  /stats – 📊 *Check your progress*\n"
-        "➕  /add – ✍️ *Add a custom question*\n"
-        "🛠️  /edit – 📝 *Modify a quiz question*\n"
-        "🗑️  /delete – ❌ *Remove a question*\n"
-        "⚙️  /poll2q – 🔄 *Convert a poll to quiz*\n"
-        "ℹ️  /help – 📚 *Full command guide*\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        
-        "🚀 *Let’s dive in and test your genius!*"
+        "✨ *Explore the commands below:*"
     )
-    await update.message.reply_text(welcome_text, parse_mode='Markdown')
+
+    keyboard = [
+        [
+            InlineKeyboardButton("🎯 Start Quiz", callback_data='start_quiz'),
+            InlineKeyboardButton("📊 My Stats", callback_data='view_stats')
+        ],
+        [
+            InlineKeyboardButton("➕ Add Question", callback_data='add_question'),
+            InlineKeyboardButton("✏️ Edit Question", callback_data='edit_question')
+        ],
+        [
+            InlineKeyboardButton("🗑️ Delete Question", callback_data='delete_question'),
+            InlineKeyboardButton("🔄 Poll ➜ Quiz", callback_data='convert_poll')
+        ],
+        [
+            InlineKeyboardButton("ℹ️ Help", callback_data='help')
+        ]
+    ]
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_text(welcome_text, reply_markup=reply_markup, parse_mode='Markdown')
     
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show help message."""
