@@ -135,11 +135,12 @@ def save_user_data(user_id, data):
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a premium-style welcome message without borders."""
+    """Send a professional welcome message with clickable user name and stylish formatting."""
     user = update.effective_user
+    user_mention = f"<a href='tg://user?id={user.id}'>{user.first_name}</a>"
 
     welcome_text = (
-        f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, {user.first_name}! ✨\n\n"
+        f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, {user_mention}! ✨\n\n"
         "🧠 𝗤𝘂𝗶𝘇 𝗠𝗮𝘀𝘁𝗲𝗿 𝗕𝗼𝘁 is here to challenge your brain and test your skills!\n\n"
         "Here’s what you can do:\n\n"
         "• ⚡ *Start a Quiz:* `/quiz`\n"
@@ -149,11 +150,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• ❌ *Delete Question:* `/delete`\n"
         "• 🔄 *Poll to Quiz:* `/poll2q`\n"
         "• ℹ️ *Help & Commands:* `/help`\n\n"
-        "🔥 𝗟𝗲𝘁'𝘀 𝗴𝗼 — 𝗯𝗲𝗰𝗼𝗺𝗲 𝘁𝗵𝗲 𝗹𝗲𝗴𝗲𝗻𝗱 𝗼𝗳 𝘁𝗵𝗲 𝗹𝗲𝗮𝗱𝗲𝗿𝗯𝗼𝗮𝗿𝗱! 🏆"
+        "🔥 𝗟𝗲𝘁'𝘀 𝗴𝗼 — 𝗯𝗲𝗰𝗼𝗺𝗲 𝘁𝗵𝗲 𝗹𝗲𝗴𝗲𝗻𝗱 𝗼𝗳 𝘁𝗵𝗲 𝗹𝗲𝗮𝗱𝗲𝗿𝗯𝗼𝗮𝗿𝗱! 🏆\n\n"
+        "<b>👨‍💻 Developer:</b> <a href='https://t.me/JaatCoderX'>@JaatCoderX</a>"
     )
 
-    await update.message.reply_text(welcome_text, parse_mode='Markdown')
-    
+    await update.message.reply_text(welcome_text, parse_mode='HTML')
+
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show help message."""
     await start(update, context)
