@@ -132,27 +132,33 @@ def save_user_data(user_id, data):
     except Exception as e:
         logger.error(f"Error saving user data: {e}")
 
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a premium-style welcome message without borders."""
     user = update.effective_user
 
+    # Stylish welcome message
     welcome_text = (
-        f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, {user_mention}! ✨\n\n"
-        "🧠 𝗤𝘂𝗶𝘇 𝗠𝗮𝘀𝘁𝗲𝗿 𝗕𝗼𝘁 is here to challenge your brain and test your skills!\n\n"
+        f"✨ <b>Welcome, <a href='tg://user?id={user.id}'>{user.first_name}</a>!</b> ✨\n\n"
+        "🧠 <b>𝗤𝘂𝗶𝘇 𝗠𝗮𝘀𝘁𝗲𝗿 𝗕𝗼𝘁</b> 𝗂𝗌 𝗁𝖾𝗋𝖾 𝗍𝗈 𝖼𝗁𝖺𝗅𝗅𝖾𝗇𝗀𝖾 𝗒𝗈𝗎𝗋 𝖻𝗋𝖺𝗂𝗇 𝖺𝗇𝖽 𝗍𝖾𝗌𝗍 𝗒𝗈𝗎𝗋 𝗌𝗄𝗂𝗅𝗅𝗌!\n\n"
         "Here’s what you can do:\n\n"
-        "• ⚡ *Start a Quiz:* `/quiz`\n"
-        "• 📊 *Check Stats:* `/stats`\n"
-        "• ➕ *Add Question:* `/add`\n"
-        "• ✏️ *Edit Question:* `/edit`\n"
-        "• ❌ *Delete Question:* `/delete`\n"
-        "• 🔄 *Poll to Quiz:* `/poll2q`\n"
-        "• ℹ️ *Help & Commands:* `/help`\n\n"
-        "🔥 𝗟𝗲𝘁'𝘀 𝗴𝗼 — 𝗯𝗲𝗰𝗼𝗺𝗲 𝘁𝗵𝗲 𝗹𝗲𝗴𝗲𝗻𝗱 𝗼𝗳 𝘁𝗵𝗲 𝗹𝗲𝗮𝗱𝗲𝗿𝗯𝗼𝗮𝗿𝗱! 🏆"
+        "• ⚡ <b>Start a Quiz:</b> <code>/quiz</code>\n"
+        "• 📊 <b>Check Stats:</b> <code>/stats</code>\n"
+        "• ➕ <b>Add Question:</b> <code>/add</code>\n"
+        "• ✏️ <b>Edit Question:</b> <code>/edit</code>\n"
+        "• ❌ <b>Delete Question:</b> <code>/delete</code>\n"
+        "• 🔄 <b>Poll to Quiz:</b> <code>/poll2q</code>\n"
+        "• ℹ️ <b>Help & Commands:</b> <code>/help</code>\n\n"
+        "🔥 <b>Let's go — become the legend of the leaderboard!</b> 🏆"
     )
 
-    await update.message.reply_text(welcome_text, parse_mode='Markdown')
+    # Send the welcome image
+    await context.bot.send_photo(
+        chat_id=update.effective_chat.id,
+        photo="https://i.imgur.com/jCtsLL4.jpeg"
+    )
+
+    # Send the welcome message
+    await update.message.reply_text(welcome_text, parse_mode=ParseMode.HTML)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show help message."""
