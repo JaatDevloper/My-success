@@ -1001,17 +1001,20 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     answer = update.poll_answer
     poll_id = answer.poll_id
     user = answer.user
-
     logger.info(f"Poll answer from {user.first_name} (ID: {user.id}) for poll {poll_id}")
 
     # Search all active quizzes for matching poll
     active_quiz = None
     active_context = None
+    quiz_owner_id = None
+    
+    # IMPORTANT: Check all user data for the active quiz with this poll
     for user_id, user_data in context.dispatcher.user_data.items():
         quiz = user_data.get("quiz", {})
         if quiz.get("active") and str(poll_id) in quiz.get("sent_polls", {}):
             active_quiz = quiz
             active_context = user_data
+            quiz_owner_id = user_id  # Remember who owns the quiz
             break
 
     if not active_quiz:
@@ -1031,8 +1034,11 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     user_id = user.id
     user_name = user.first_name
 
+    # Initialize participants if needed
     if "participants" not in active_quiz:
         active_quiz["participants"] = {}
+        
+    # Add this user to participants if not already there
     if user_id not in active_quiz["participants"]:
         active_quiz["participants"][user_id] = {
             "name": user_name,
@@ -1042,14 +1048,19 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         }
 
     # Update answer counts
+    logger.info(f"Updating answer for user {user_name} (ID: {user_id})")
     active_quiz["participants"][user_id]["answered"] += 1
     is_correct = answer.option_ids and answer.option_ids[0] == correct_answer
     if is_correct:
         active_quiz["participants"][user_id]["correct"] += 1
+    
+    # Log the updated participant data
+    logger.info(f"Updated participant data: {active_quiz['participants']}")
 
     # Save the answer in sent_polls
     if "answers" not in poll_info:
         poll_info["answers"] = {}
+        
     poll_info["answers"][str(user_id)] = {
         "option_id": answer.option_ids[0] if answer.option_ids else None,
         "is_correct": is_correct,
@@ -1060,6 +1071,12 @@ async def poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     # Store back updated poll_info and quiz
     active_quiz["sent_polls"][str(poll_id)] = poll_info
     active_context["quiz"] = active_quiz
+    
+    # Make sure to update the user_data in the dispatcher to persist the data
+    context.dispatcher.user_data[quiz_owner_id] = active_context
+    
+    # Debug: check participant data after update
+    logger.info(f"Final quiz participants after update: {active_quiz['participants']}")
 
     # Update user stats
     user_data = get_user_data(user_id)
