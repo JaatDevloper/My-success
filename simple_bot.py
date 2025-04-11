@@ -139,7 +139,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
         f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, [{user.first_name}](tg://user?id={user.id})! ✨\n\n"
         "🧠 *𝗤𝘂𝗶𝘇 𝗠𝗮𝘀𝘁𝗲𝗿 𝗕𝗼𝘁* 𝗂𝗌 𝗁𝖾𝗋𝖾 𝗍𝗈 𝖼𝗁𝖺𝗅𝗅𝖾𝗇𝗀𝖾 𝗒𝗈𝗎𝗋 𝖻𝗋𝖺𝗂𝗇 𝖺𝗇𝖽 𝗍𝖾𝗌𝗍 𝗒𝗈𝗎𝗋 𝗌𝗄𝗂𝗅𝗅𝗌!\n\n"
-        "Here’s what you can do:\n\n"
+        "𝗁𝖾𝗋𝖾’𝗌 𝗐𝗁𝖺𝗍 𝗒𝗈𝗎 𝖼𝖺𝗇 𝖽𝗈:\n\n"
         "• ⚡ *Start a Quiz:* `/quiz`\n"
         "• 📊 *Check Stats:* `/stats`\n"
         "• ➕ *Add Question:* `/add`\n"
@@ -147,11 +147,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• ❌ *Delete Question:* `/delete`\n"
         "• 🔄 *Poll to Quiz:* `/poll2q`\n"
         "• ℹ️ *Help & Commands:* `/help`\n\n"
-        "🔥 *Let’s go — become the legend of the leaderboard!* 🏆"
+        "🔥 *Let’s go — become the legend of the leaderboard!* 🏆\n\n"
+        "👨‍💻 *Developed by* [@JaatCoderX](https://t.me/JaatCoderX)"
     )
 
     await update.message.reply_text(welcome_text, parse_mode='Markdown')
-    
+
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show help message."""
     await start(update, context)
