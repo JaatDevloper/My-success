@@ -139,7 +139,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
 
     welcome_text = (
-        f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, {user.first_name}! ✨\n\n"
+        f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, {user_mention}! ✨\n\n"
         "🧠 𝗤𝘂𝗶𝘇 𝗠𝗮𝘀𝘁𝗲𝗿 𝗕𝗼𝘁 is here to challenge your brain and test your skills!\n\n"
         "Here’s what you can do:\n\n"
         "• ⚡ *Start a Quiz:* `/quiz`\n"
