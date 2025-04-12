@@ -32,10 +32,9 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "7631768276:AAFwTYA8CK5tTHQfExI-w9cxPLnlLJa4iW0")
 
 # Telethon API credentials for quiz cloning
-API_ID = os.environ.get("API_ID")
-API_HASH = os.environ.get("API_HASH")
-PHONE_NUMBER = os.environ.get("PHONE_NUMBER")
-SESSION_STRING = os.environ.get("SESSION_STRING")
+API_ID = os.environ.get("API_ID", "28624690")  # Replace with your actual API ID
+API_HASH = os.environ.get("API_HASH", "67e6593b5a9b5ab20b11ccef6700af5b")  # Replace with your actual API Hash
+PHONE_NUMBER = os.environ.get("PHONE_NUMBER", "+919351504990")  # Replace with your phone number
 
 # Global Telethon client for quiz cloning
 telethon_client = None
