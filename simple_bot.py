@@ -1306,7 +1306,7 @@ def main() -> None:
             ANSWER: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_question_answer)],
             CUSTOM_ID: [
                 CallbackQueryHandler(custom_id_callback, pattern="^(auto_id|custom_id)$"),
-                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Update.CALLBACK_QUERY, custom_id_input)
+                MessageHandler(filters.TEXT & ~filters.COMMAND, custom_id_input)
             ],
             CATEGORY: [CallbackQueryHandler(category_callback, pattern="^category_")]
         },
