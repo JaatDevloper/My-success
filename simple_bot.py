@@ -31,11 +31,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Bot token from environment variable
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "7631768276:AAHiltM9o6XenZrTP5X3TgGdtgqsC6NFXSc")
 
 # Telethon API credentials from environment variables
-API_ID = int(os.environ.get("API_ID", "0"))  # Convert to int for Telethon
-API_HASH = os.environ.get("API_HASH", "")
+API_ID = int(os.environ.get("API_ID", "28624690"))  # Convert to int for Telethon
+API_HASH = os.environ.get("API_HASH", "67e6593b5a9b5ab20b11ccef6700af5b")
 SESSION_NAME = "quiz_user_session"  # Session for user account
 
 # Conversation states
