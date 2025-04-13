@@ -8,6 +8,11 @@ import logging
 import os
 import random
 import asyncio
+import re
+import requests
+from bs4 import BeautifulSoup
+import trafilatura
+from typing import Dict, List, Optional
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackQueryHandler, PollAnswerHandler
 
@@ -25,6 +30,9 @@ QUESTION, OPTIONS, ANSWER, CATEGORY = range(4)
 EDIT_SELECT, EDIT_QUESTION, EDIT_OPTIONS = range(4, 7)
 CLONE_URL, CLONE_MANUAL = range(7, 9)
 CUSTOM_ID = range(9, 10)
+
+# URL extraction states for conversation handler
+URL_INPUT, URL_CONFIRMATION, CATEGORY_SELECTION = range(100, 103)
 
 # Data files
 QUESTIONS_FILE = "questions.json"
@@ -273,10 +281,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "✏️ /edit - Edit an existing question\n"
         "❌ /delete - Delete a question\n"
         "🔄 /poll2q - Convert a Telegram poll to a quiz question\n"
+        "🌐 /url2q - Extract questions from a Google URL with quiz content\n"
         "⚙️ /negmark - Configure negative marking settings\n"
         "🧹 /resetpenalty - Reset your penalties\n"
         "ℹ️ /help - Show this help message\n\n"
-        "Let's test your knowledge with some fun quizzes!"
+        "Let's test your knowledge with some fun quizzes!\n\n"
+        "🆕 NEW FEATURE: Use /url2q to automatically extract multiple-choice questions from any Google link containing quizzes!"
     )
     await update.message.reply_text(welcome_text)
 
@@ -367,6 +377,378 @@ async def reset_user_penalty_command(update: Update, context: ContextTypes.DEFAU
         reset_user_penalties(user_id)
         await update.message.reply_text("✅ Your penalties have been reset.")
 # ---------- END NEGATIVE MARKING COMMAND ADDITIONS ----------
+
+# ---------- URL TO QUESTION FUNCTIONALITY ----------
+def fetch_url_content(url: str) -> Optional[str]:
+    """Fetch content from a URL using Trafilatura"""
+    try:
+        downloaded = trafilatura.fetch_url(url)
+        if downloaded:
+            return trafilatura.extract(downloaded)
+        return None
+    except Exception as e:
+        logger.error(f"Error fetching URL content: {e}")
+        return None
+
+def fetch_url_content_with_bs4(url: str) -> Optional[str]:
+    """Fetch content from a URL using requests and BeautifulSoup as a backup method"""
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Remove script and style elements
+        for script in soup(["script", "style"]):
+            script.extract()
+            
+        # Get text
+        text = soup.get_text(separator='\n')
+        
+        # Clean up whitespace
+        lines = (line.strip() for line in text.splitlines())
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        text = '\n'.join(chunk for chunk in chunks if chunk)
+        
+        return text
+    except Exception as e:
+        logger.error(f"Error fetching URL content with BS4: {e}")
+        return None
+
+def extract_questions_from_text(text: str) -> List[Dict]:
+    """
+    Extract questions and answers from text content
+    Returns a list of question dictionaries in the format:
+    {
+        'question': 'What is the capital of France?',
+        'options': ['Paris', 'London', 'Berlin', 'Madrid'],
+        'correct_answer': 0,  # Index of correct answer
+        'category': 'General Knowledge'
+    }
+    """
+    if not text:
+        return []
+    
+    extracted_questions = []
+    
+    # Pattern for matching multiple-choice questions
+    # Looking for patterns like:
+    # 1. Question text?
+    # a) Option 1
+    # b) Option 2
+    # c) Option 3
+    # Answer: a
+    
+    # Split text into lines for processing
+    lines = text.split('\n')
+    
+    question_pattern = re.compile(r'^(?:\d+\.|\([a-zA-Z]\)|\*)\s+(.+\?)')
+    option_pattern = re.compile(r'^(?:[a-zA-Z]\)|\([a-zA-Z]\)|\d+\.)\s+(.+)')
+    answer_pattern = re.compile(r'(?:answer|correct|solution):\s*(?:[a-zA-Z]\)|\([a-zA-Z]\)|\d+\.?|)?\s*([a-zA-Z0-9].+)', re.IGNORECASE)
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        question_match = question_pattern.match(line)
+        
+        if question_match:
+            question_text = question_match.group(1).strip()
+            options = []
+            correct_answer = None
+            option_indices = {}
+            
+            # Look for options in subsequent lines
+            j = i + 1
+            option_index = 0
+            while j < len(lines) and not question_pattern.match(lines[j].strip()):
+                option_line = lines[j].strip()
+                option_match = option_pattern.match(option_line)
+                
+                if option_match:
+                    option_text = option_match.group(1).strip()
+                    options.append(option_text)
+                    # Store the mapping of option letter/number to index
+                    option_key = option_line[0].lower() if option_line[0].isalpha() else option_line.split('.')[0].strip()
+                    option_indices[option_key] = option_index
+                    option_index += 1
+                
+                # Check if this line contains the answer
+                answer_match = answer_pattern.match(option_line)
+                if answer_match:
+                    answer_text = answer_match.group(1).strip().lower()
+                    # The answer might be a letter or the full text of the correct option
+                    if answer_text in option_indices:
+                        correct_answer = option_indices[answer_text]
+                    else:
+                        # Try to match the answer text to one of the options
+                        for idx, opt in enumerate(options):
+                            if opt.lower() == answer_text:
+                                correct_answer = idx
+                                break
+                
+                j += 1
+            
+            # If we have a question with at least 2 options and a correct answer
+            if question_text and len(options) >= 2 and correct_answer is not None:
+                extracted_questions.append({
+                    'question': question_text,
+                    'options': options,
+                    'correct_answer': correct_answer,
+                    'category': 'General Knowledge'  # Default category, can be changed later
+                })
+            
+            i = j
+        else:
+            i += 1
+    
+    # Try a different approach if no questions were found
+    if not extracted_questions:
+        extracted_questions = extract_questions_alternative(text)
+    
+    return extracted_questions
+
+def extract_questions_alternative(text: str) -> List[Dict]:
+    """Alternative method to extract questions from less structured content"""
+    extracted_questions = []
+    
+    # Look for sections that might contain questions and answers
+    question_blocks = re.split(r'\n\s*\n', text)
+    
+    for block in question_blocks:
+        lines = block.strip().split('\n')
+        if len(lines) < 3:  # Need at least a question and two options
+            continue
+        
+        # Assume first line might be a question if it ends with ?
+        question_line = None
+        for line in lines:
+            if '?' in line:
+                question_line = line.strip()
+                break
+        
+        if not question_line:
+            continue
+            
+        # Look for numbered or lettered options
+        options = []
+        for line in lines:
+            option_match = re.match(r'^[A-Da-d][\.\)]\s+(.+)$', line.strip())
+            if option_match:
+                options.append(option_match.group(1).strip())
+        
+        # If we found at least 2 options
+        if len(options) >= 2:
+            # Look for answer indicators
+            correct_answer = None
+            for i, line in enumerate(lines):
+                answer_match = re.search(r'(correct\s+answer|answer\s+is)[\s:]+([A-Da-d])', line, re.IGNORECASE)
+                if answer_match:
+                    answer_letter = answer_match.group(2).upper()
+                    # Convert A, B, C, D to 0, 1, 2, 3
+                    correct_answer = ord(answer_letter) - ord('A')
+                    break
+            
+            # Default to the first option if no answer found
+            if correct_answer is None:
+                correct_answer = 0
+                
+            extracted_questions.append({
+                'question': question_line,
+                'options': options,
+                'correct_answer': correct_answer,
+                'category': 'General Knowledge'  # Default category
+            })
+    
+    return extracted_questions
+
+async def start_url_extraction(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Start the URL extraction process"""
+    await update.message.reply_text(
+        "Please send me a Google URL containing quiz questions. "
+        "I'll extract the questions and add them to the question bank.\n\n"
+        "You can send a URL to a quiz page or a search result page."
+    )
+    return URL_INPUT
+
+async def process_url(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Process the URL sent by the user"""
+    url = update.message.text.strip()
+    
+    # Validate URL (basic check)
+    if not url.startswith(('http://', 'https://')):
+        await update.message.reply_text(
+            "That doesn't look like a valid URL. "
+            "Please send a valid URL starting with http:// or https://.\n\n"
+            "You can try again or use /cancel to exit."
+        )
+        return URL_INPUT
+    
+    # Store the URL in context
+    context.user_data['url'] = url
+    
+    # Tell the user we're processing the URL
+    processing_message = await update.message.reply_text("Processing URL... This might take a moment.")
+    
+    # Try to fetch content using Trafilatura first
+    content = fetch_url_content(url)
+    
+    # If Trafilatura failed, try with BeautifulSoup
+    if not content:
+        await update.message.reply_text("First extraction method failed, trying alternative approach...")
+        content = fetch_url_content_with_bs4(url)
+    
+    if not content:
+        await update.message.reply_text(
+            "❌ Failed to extract content from the URL. "
+            "The site might be blocking scraping or the URL might be invalid.\n\n"
+            "Please try another URL or use /cancel to exit."
+        )
+        return URL_INPUT
+    
+    # Extract questions from the content
+    questions = extract_questions_from_text(content)
+    
+    # Store extracted questions in context
+    context.user_data['extracted_questions'] = questions
+    
+    # Update the processing message
+    await processing_message.edit_text(f"Processing complete! Found {len(questions)} questions.")
+    
+    if not questions:
+        await update.message.reply_text(
+            "❌ No questions found in the URL content. "
+            "The URL might not contain properly formatted quiz questions.\n\n"
+            "Please try another URL or use /cancel to exit."
+        )
+        return URL_INPUT
+    
+    # Show the first extracted question as a preview
+    if questions:
+        question = questions[0]
+        preview_text = (
+            f"📝 Found {len(questions)} questions! Here's a preview of the first one:\n\n"
+            f"Question: {question['question']}\n\n"
+            f"Options:\n"
+        )
+        
+        for i, option in enumerate(question['options']):
+            correct_mark = "✓ " if i == question['correct_answer'] else ""
+            preview_text += f"{i+1}. {correct_mark}{option}\n"
+        
+        preview_text += f"\nCorrect answer: {question['correct_answer'] + 1}"
+        
+        # Create confirmation buttons
+        keyboard = [
+            [
+                InlineKeyboardButton("✅ Add All Questions", callback_data="url_confirm_add_all"),
+                InlineKeyboardButton("❌ Cancel", callback_data="url_cancel")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(preview_text, reply_markup=reply_markup)
+        return URL_CONFIRMATION
+    
+    return ConversationHandler.END
+
+async def confirm_questions(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle confirmation of extracted questions"""
+    query = update.callback_query
+    await query.answer()
+    
+    if query.data == "url_cancel":
+        await query.edit_message_text("Operation cancelled. No questions were added.")
+        return ConversationHandler.END
+    
+    if query.data == "url_confirm_add_all":
+        # Show category selection keyboard
+        categories = [
+            "General Knowledge",
+            "Science",
+            "History",
+            "Geography",
+            "Entertainment",
+            "Sports",
+            "Other"
+        ]
+        
+        keyboard = []
+        for category in categories:
+            keyboard.append([InlineKeyboardButton(category, callback_data=f"url_category_{category}")])
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(
+            "Please select a category for these questions:",
+            reply_markup=reply_markup
+        )
+        return CATEGORY_SELECTION
+    
+    return ConversationHandler.END
+
+async def select_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle selection of category for the extracted questions"""
+    query = update.callback_query
+    await query.answer()
+    
+    # Extract the category from callback data
+    category = query.data.replace("url_category_", "")
+    
+    # Get extracted questions from context
+    questions = context.user_data.get('extracted_questions', [])
+    
+    if not questions:
+        await query.edit_message_text("❌ Error: No questions found in memory. Please try again.")
+        return ConversationHandler.END
+    
+    # Set the category for all questions
+    for question in questions:
+        question['category'] = category
+    
+    # Add questions to the database
+    questions_added = 0
+    next_id = get_next_question_id()
+    
+    for question in questions:
+        # Convert to the format expected by add_question_with_id
+        question_data = {
+            'question': question['question'],
+            'options': question['options'],
+            'answer': question['correct_answer'],
+            'category': question['category']
+        }
+        add_question_with_id(next_id, question_data)
+        next_id += 1
+        questions_added += 1
+    
+    await query.edit_message_text(
+        f"✅ Successfully added {questions_added} questions to the category '{category}'!\n\n"
+        f"You can now use these questions in your quizzes."
+    )
+    
+    # Clean up context data
+    if 'extracted_questions' in context.user_data:
+        del context.user_data['extracted_questions']
+    if 'url' in context.user_data:
+        del context.user_data['url']
+    
+    return ConversationHandler.END
+
+async def url_extraction_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Cancel the URL extraction process"""
+    await update.message.reply_text("URL extraction cancelled.")
+    
+    # Clean up context data
+    if 'extracted_questions' in context.user_data:
+        del context.user_data['extracted_questions']
+    if 'url' in context.user_data:
+        del context.user_data['url']
+    
+    return ConversationHandler.END
+# ---------- END URL TO QUESTION FUNCTIONALITY ----------
 
 # Original function (unchanged)
 async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1049,6 +1431,18 @@ def main() -> None:
     application.add_handler(CommandHandler("negmark", negative_marking_settings))
     application.add_handler(CommandHandler("resetpenalty", reset_user_penalty_command))
     application.add_handler(CallbackQueryHandler(negative_settings_callback, pattern=r"^neg_mark_"))
+    
+    # URL to Question command and handlers
+    url_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("url2q", start_url_extraction)],
+        states={
+            URL_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_url)],
+            URL_CONFIRMATION: [CallbackQueryHandler(confirm_questions, pattern=r'^url_')],
+            CATEGORY_SELECTION: [CallbackQueryHandler(select_category, pattern=r'^url_category_')]
+        },
+        fallbacks=[CommandHandler("cancel", url_extraction_cancel)]
+    )
+    application.add_handler(url_conv_handler)
     
     # Poll to question command and handlers
     application.add_handler(CommandHandler("poll2q", poll_to_question))
