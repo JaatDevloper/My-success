@@ -13,3 +13,4 @@ Pillow>=9.0.0
 trafilatura
 PyMuPDF
 pdfplumber
+langdetect
