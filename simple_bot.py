@@ -1091,7 +1091,7 @@ def main() -> None:
     
     # Start the Bot
     application.add_handler(CommandHandler("importpdf", import_pdf_command))
-    application.add_handler(MessageHandler(filters.Document.PDF, handle_pdf_upload))
+    application.add_handler(MessageHandler(filters.Document.ALL & filters.Document.MimeType("application/pdf"), handle_pdf_upload))
     application.run_polling()
 
 if __name__ == "__main__":
