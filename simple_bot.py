@@ -324,9 +324,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• ✋ <b>Stop Quiz Anytime:</b> /stop\n\n"
         
         "🔥 <b>Let’s go — become the legend of the leaderboard!</b> 🏆\n\n"
-        "👨‍💻 <b>Developed by</b> <a href='https://t.me/JaatCoderX'>@JaatCoderX</a>\n"
-        "💬 <i>Telegram</i>\n"
-        "❤️🗿 <b><i>INSANE</i></b>"
+        "👨‍💻 <b>Developed by</b> <a href='https://t.me/JaatCoderX'>@JaatCoderX</a>\n"  
     )
     await update.message.reply_html(welcome_text)
     
