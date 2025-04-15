@@ -791,7 +791,7 @@ async def send_question(context, chat_id, question_index):
 
 async def schedule_next_question(context, chat_id, next_index):
     """Schedule the next question with delay."""
-    await asyncio.sleep(30)  # Wait 30 seconds
+    await asyncio.sleep(15)  # Wait 30 seconds
     
     # Check if quiz is still active
     quiz = context.chat_data.get("quiz", {})
@@ -800,7 +800,7 @@ async def schedule_next_question(context, chat_id, next_index):
 
 async def schedule_end_quiz(context, chat_id):
     """Schedule end of quiz with delay."""
-    await asyncio.sleep(30)  # Wait 30 seconds after last question
+    await asyncio.sleep(15)  # Wait 30 seconds after last question
     
     # End the quiz
     await end_quiz(context, chat_id)
