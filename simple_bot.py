@@ -22,6 +22,7 @@ except ImportError:
 import tempfile
 TEMP_DIR = tempfile.mkdtemp()
 
+import re
 import json
 import logging
 import os
