@@ -323,8 +323,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• 🧹 <b>Reset Penalties:</b> /resetpenalty\n"
         "• ✋ <b>Stop Quiz Anytime:</b> /stop\n\n"
         
-        "🔥 Let’s go — become the legend of the leaderboard! 🏆\n\n"
-        "👨‍💻 <i>Developed by</i> @JaatCoderX"
+        "🔥 <b>Let’s go — become the legend of the leaderboard!</b> 🏆\n\n"
+        "👨‍💻 <b>Developed by</b> <a href='https://t.me/JaatCoderX'>@JaatCoderX</a>\n"
+        "💬 <i>Telegram</i>\n"
+        "❤️🗿 <b><i>INSANE</i></b>"
     )
     await update.message.reply_html(welcome_text)
     
