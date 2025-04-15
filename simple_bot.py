@@ -1778,6 +1778,8 @@ def main() -> None:
         fallbacks=[CommandHandler("cancel", cancel)],
     )
     application.add_handler(add_question_handler)
+
+    application.add_handler(CommandHandler("result", result))
     
     # Poll Answer Handler - CRITICAL for tracking all participants
     application.add_handler(PollAnswerHandler(poll_answer))
