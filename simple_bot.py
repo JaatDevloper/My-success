@@ -1166,7 +1166,7 @@ def parse_questions_from_text(text_list, custom_id=None):
                 i = j - 1 if option_detected else j  # Adjust index to continue from option lines or next line
             
             # Check for options
-            
+
 elif current_question and re.match(r"^(ans|answer|correct answer)[:\- ]", line.strip(), re.IGNORECASE):
     # Extract option letter from the answer line using regex
     match = re.search(r"[ABCDabcd1-4]", line)
@@ -1178,6 +1178,9 @@ elif current_question and re.match(r"^(ans|answer|correct answer)[:\- ]", line.s
             'C': 2, '3': 2,
             'D': 3, '4': 3
         }.get(char, 0)
+        
+            
+
 
                 elif 'b' in answer_text or '2' in answer_text or 'option b' in answer_text:
                     current_question['answer'] = 1
