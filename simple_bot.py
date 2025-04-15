@@ -1,16 +1,3 @@
-
-# ======= /stop command =======
-async def stop_quiz_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.effective_chat.id
-    quiz = context.chat_data.get("quiz", {})
-    if quiz.get("active", False):
-        quiz["active"] = False
-        context.chat_data["quiz"] = quiz
-        await update.message.reply_text("✅ Quiz has been stopped.")
-    else:
-        await update.message.reply_text("ℹ️ No quiz is currently running.")
-
-
 """
 Enhanced Telegram Quiz Bot with PDF Import & Hindi Support
 - Based on the original multi_id_quiz_bot.py
@@ -1627,6 +1614,18 @@ async def pdf_info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         "/quizid YOUR_CUSTOM_ID"
     )
     await update.message.reply_text(info_text)
+
+# ====== /stop command ======
+async def stop_quiz_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    quiz = context.chat_data.get("quiz", {})
+
+    if quiz.get("active", False):
+        quiz["active"] = False
+        context.chat_data["quiz"] = quiz
+        await update.message.reply_text("✅ Quiz has been stopped.")
+    else:
+        await update.message.reply_text("ℹ️ No quiz is currently running.")
 
 def main() -> None:
     """Start the bot."""
