@@ -1,4 +1,3 @@
-
 # OCR + PDF Text Extraction + Block-Level Deduplication
 import os
 import pytesseract
