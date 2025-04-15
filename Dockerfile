@@ -6,33 +6,30 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata
 
-# Set work directory
+# Set working directory
 WORKDIR /app
 
-# Install system dependencies including Hindi OCR support
+# Install system dependencies & Hindi OCR model
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     tesseract-ocr \
     tesseract-ocr-hin \
     libtesseract-dev \
+    wget \
     poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file
+# Ensure hin.traineddata is available (optional but safe)
+RUN mkdir -p /usr/share/tesseract-ocr/5/tessdata && \
+    wget -O /usr/share/tesseract-ocr/5/tessdata/hin.traineddata \
+    https://github.com/tesseract-ocr/tessdata/raw/main/hin.traineddata
+
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
-
-# Copy project
+# Copy the rest of your bot project
 COPY . .
 
-# Create data directory
-RUN mkdir -p /app/data
-
-# Set default execution mode to combined (both bot and web server)
-ENV EXECUTION_MODE=combined
-
-# Run in combined mode by default (can be overridden by environment variables)
+# Default CMD
 CMD ["python", "main.py"]
