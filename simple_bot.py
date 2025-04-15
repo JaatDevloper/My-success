@@ -300,32 +300,34 @@ def detect_language(text):
     return 'en'
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a welcome message when the command /start is issued."""
     user = update.effective_user
     welcome_text = (
-        f"👋 Hello, {user.first_name}!\n\n"
-        "Welcome to the Enhanced Quiz Bot with PDF Import & Hindi Support.\n\n"
-        "📝 Core Features:\n"
-        "💡 /quiz - Start a new quiz (auto-sequence)\n"
-        "📊 /stats - View your quiz statistics with penalties\n"
-        "➕ /add - Add a new question to the quiz bank\n"
-        "✏️ /edit - Edit an existing question\n"
-        "❌ /delete - Delete a question\n\n"
+        f"✨ 𝙒𝙚𝙡𝙘𝙤𝙢𝙚, {user.mention_html()} ✨\n\n"
+        "🧠 <b>𝗤𝘂𝗶𝘇 𝗠𝗮𝘀𝘁𝗲𝗿 𝗕𝗼𝘁</b> is here to challenge your mind and test your skills!\n\n"
+        "<b>𝗛𝗲𝗿𝗲’𝘀 𝘄𝗵𝗮𝘁 𝘆𝗼𝘂 𝗰𝗮𝗻 𝗱𝗼:</b>\n"
+        "• ⚡ <b>Start a Quiz:</b> /quiz\n"
+        "• 📊 <b>Check Stats:</b> /stats\n"
+        "• ➕ <b>Add Question:</b> /add\n"
+        "• ✏️ <b>Edit Question:</b> /edit\n"
+        "• ❌ <b>Delete Question:</b> /delete\n"
+        "• 🔄 <b>Poll to Quiz:</b> /poll2q\n"
+        "• ℹ️ <b>Help & Commands:</b> /help\n\n"
         
-        "📄 PDF Import Features:\n"
-        "📥 /pdfimport - Import questions from a PDF file\n"
-        "🆔 /quizid - Start a quiz with a specific custom ID\n"
-        "ℹ️ /pdfinfo - Information about PDF import features\n\n"
+        "📄 <b>𝗣𝗗𝗙 𝗜𝗺𝗽𝗼𝗿𝘁 & Custom ID:</b>\n"
+        "• 📥 <b>Import from PDF:</b> /pdfimport\n"
+        "• 🆔 <b>Start Quiz by ID:</b> /quizid\n"
+        "• ℹ️ <b>PDF Info:</b> /pdfinfo\n\n"
         
-        "🔄 Additional Features:\n"
-        "🔄 /poll2q - Convert a Telegram poll to a quiz question\n"
-        "⚙️ /negmark - Configure negative marking settings\n"
-        "🧹 /resetpenalty - Reset your penalties\n"
-        "ℹ️ /help - Show this help message\n\n"
-        "Let's test your knowledge with some fun quizzes!"
+        "⚙️ <b>𝗔𝗱𝘃𝗮𝗻𝗰𝗲𝗱 𝗤𝘂𝗶𝘇 𝗦𝗲𝘁𝘁𝗶𝗻𝗴𝘀:</b>\n"
+        "• ⚙️ <b>Negative Marking:</b> /negmark\n"
+        "• 🧹 <b>Reset Penalties:</b> /resetpenalty\n"
+        "• ✋ <b>Stop Quiz Anytime:</b> /stop\n\n"
+        
+        "🔥 Let’s go — become the legend of the leaderboard! 🏆\n\n"
+        "👨‍💻 <i>Developed by</i> @JaatCoderX"
     )
-    await update.message.reply_text(welcome_text)
-
+    await update.message.reply_html(welcome_text)
+    
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show help message."""
     await start(update, context)
