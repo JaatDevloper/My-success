@@ -2162,160 +2162,166 @@ def scrape_quiz_content(url):
     else:
         return [], "No questions found in the content."
 
-def format_questions_for_bot(questions, category="Web Scraped"):
-    """Format scraped questions for the bot's question format"""
-    formatted_questions = []
+def extract_questions_with_options(text):
+    """
+    Extract questions and their options from text content.
+    Works with both English and Hindi text.
+    Enhanced to better preserve original option text.
     
-    # Check if the category contains Hindi
-    is_hindi_category = False
-    hindi_range = range(0x0900, 0x097F + 1)
-    for char in category:
-        if ord(char) in hindi_range:
-            is_hindi_category = True
-            break
-    
-    # If Hindi is detected in category but not explicitly mentioned, append to category
-    if is_hindi_category and "Hindi" not in category and "हिंदी" not in category:
-        category = f"{category} (हिंदी)"
-    
-    # Debug log how many questions we're processing
-    logger.info(f"Formatting {len(questions)} questions for category: {category}")
-    
-    for qa_pair in questions:
-        # Check if question has the required fields
-        if 'question' not in qa_pair:
-            logger.warning("Skipping question without 'question' field")
-            continue
-            
-        question_text = qa_pair['question']
+    Args:
+        text (str): The text content to process
         
-        # Skip questions that are too short or likely not actual questions
-        if len(question_text) < 5:
-            logger.warning(f"Skipping too short question: {question_text}")
-            continue
-            
-        # Detect if question is in Hindi
-        contains_hindi = False
-        for char in question_text:
-            if ord(char) in hindi_range:
-                contains_hindi = True
-                break
+    Returns:
+        list: List of dictionaries containing questions with their options and answers
+    """
+    if not text:
+        return []
+    
+    # Detect language
+    language = detect_language(text)
+    
+    # Split text into lines and remove empty lines
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    
+    # Initialize variables
+    questions = []
+    current_question = None
+    current_options = []
+    option_letters = []
+    correct_answer = None
+    
+    # Patterns for question detection
+    # Look for lines ending with question mark or starting with Q. or Question
+    question_patterns = [
+        r'^.*\?$',  # Ends with question mark
+        r'^Q\.?\s*\d*\.?\s+.*',  # Starts with Q. or Q followed by number
+        r'^Question\s*\d*\.?\s+.*',  # Starts with "Question" possibly followed by number
+        r'^\d+\.\s+.*\?$',  # Numbered question ending with question mark
+        r'^प्रश्न\s*\d*\.?\s+.*',  # Hindi "Question" possibly followed by number
+    ]
+    
+    # Patterns for option detection
+    # Look for lines starting with A., B., C., D. or 1., 2., 3., 4. or (a), (b), etc.
+    option_patterns = [
+        # English patterns - Most common first for better performance
+        r'^([A-D])\.?\s+(.+)',  # A. Option text
+        r'^\(([A-D])\)\s+(.+)',  # (A) Option text
+        r'^([a-d])\.?\s+(.+)',  # a. Option text
+        r'^\(([a-d])\)\s+(.+)',  # (a) Option text
+        r'^(\d+)\.?\s+(.+)',  # 1. Option text
+        r'^\((\d+)\)\s+(.+)',  # (1) Option text
+        # Hindi specific patterns
+        r'^(पहला)\s*विकल्प\s*:?\s+(.+)',  # पहला विकल्प: Option text
+        r'^(दूसरा)\s*विकल्प\s*:?\s+(.+)',  # दूसरा विकल्प: Option text
+        r'^(तीसरा)\s*विकल्प\s*:?\s+(.+)',  # तीसरा विकल्प: Option text
+        r'^(चौथा)\s*विकल्प\s*:?\s+(.+)',  # चौथा विकल्प: Option text
+        # Universal option markers for Hindi
+        r'^विकल्प\s+([क-घ])\s*:?\s+(.+)',  # विकल्प क: Option text
+        r'^([क-घ])\.?\s+(.+)',  # क. Option text
+        r'^\(([क-घ])\)\s+(.+)',  # (क) Option text
+    ]
+    
+    # Pattern for answer detection
+    answer_patterns = [
+        r'^(Answer|Ans|Correct Answer|Solution)s?\s*:?\s*([A-D]|\d+|[क-घ])',
+        r'^सही उत्तर\s*:?\s*([A-D]|\d+|[क-घ])',
+        r'^उत्तर\s*:?\s*([A-D]|\d+|[क-घ])'
+    ]
+    
+    # State tracking
+    in_options_section = False
+    option_count = 0
+    
+    # Process each line
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        
+        # Check if this line is a question
+        is_question = any(re.match(pattern, line) for pattern in question_patterns) or '?' in line
+        
+        # If we found a question and we already have a current question, save the previous one
+        if is_question and current_question:
+            # If we have options for the previous question, save it
+            if current_options:
+                # Map the correct answer letter to index
+                correct_index = 0  # Default to first option
+                if correct_answer:
+                    # Try to find the correct answer in our options
+                    for idx, (letter, _) in enumerate(current_options):
+                        if letter.lower() == correct_answer.lower():
+                            correct_index = idx
+                            break
                 
-        # Handle options
-        options = []
-        correct_answer_index = None
-        
-        # Log the option data for debugging
-        logger.info(f"Processing question: {question_text[:50]}...")
-        logger.info(f"Options data: {qa_pair.get('options', [])}")
-        logger.info(f"Answer data: {qa_pair.get('answer')}")
-        
-        if 'options' in qa_pair and qa_pair['options']:
-            # If we have structured options
-            valid_options = []
+                # Create question data structure
+                q_data = {
+                    'question': current_question,
+                    'options': current_options.copy(),
+                    'correct_answer': correct_index
+                }
+                questions.append(q_data)
             
-            # Filter out empty options and ensure they have valid text
-            for opt_letter, opt_text in qa_pair['options']:
-                if opt_text and len(opt_text.strip()) > 0:
-                    valid_options.append((opt_letter, opt_text.strip()))
-            
-            # Only use options if we have valid ones
-            if valid_options:
-                # Extract the option text for the formatted question
-                for i, (opt_letter, opt_text) in enumerate(valid_options):
-                    options.append(opt_text)
+            # Reset for new question
+            current_options = []
+            option_letters = []
+            correct_answer = None
+            in_options_section = False
+            option_count = 0
+        
+        # If this is a question line, set it as current question
+        if is_question:
+            current_question = line
+            in_options_section = True  # Options likely follow the question
+        elif current_question:
+            # Check if this line contains an option
+            for pattern in option_patterns:
+                match = re.match(pattern, line)
+                if match:
+                    letter = match.group(1)
+                    option_text = match.group(2).strip()
                     
-                    # Check if this is the correct answer
-                    if 'answer' in qa_pair and qa_pair['answer'] and opt_letter == qa_pair['answer']:
-                        correct_answer_index = i
-                
-                # If we couldn't determine the correct answer, set it to the first option
-                if correct_answer_index is None:
-                    correct_answer_index = 0
-                    logger.info(f"Could not determine correct answer, defaulting to first option")
-            else:
-                logger.warning(f"No valid options found in the option data")
-        
-        # If we still don't have valid options, create meaningful ones based on the question
-        if not options:
-            logger.warning(f"No options provided, generating appropriate ones")
+                    # Prevent duplicate options (keep first occurrence)
+                    if letter not in option_letters and option_text:
+                        current_options.append((letter, option_text))
+                        option_letters.append(letter)
+                        option_count += 1
+                    break
             
-            # Check if the question is likely a yes/no question
-            is_yes_no_question = any(marker in question_text.lower() for marker in 
-                                   ['yes', 'no', 'true', 'false', 'हां', 'नहीं', 'सही', 'गलत'])
-            
-            # Generate more appropriate options based on question type
-            if is_yes_no_question:
-                if contains_hindi:
-                    options = ["हां (Yes)", "नहीं (No)"]
-                else:
-                    options = ["Yes", "No"]
-            else:
-                # Extract potential answer words from the question itself
-                words = re.findall(r'\b\w+\b', question_text)
-                potential_answers = [w for w in words if len(w) > 3]
-                
-                if potential_answers and len(potential_answers) >= 4:
-                    # Use words from the question as options
-                    options = potential_answers[:4]
-                else:
-                    # Default options based on language
-                    if contains_hindi:
-                        options = ["पहला विकल्प", "दूसरा विकल्प", "तीसरा विकल्प", "चौथा विकल्प"]
-                    else:
-                        options = ["First option", "Second option", "Third option", "Fourth option"]
-            
-            correct_answer_index = 0
+            # Check if this line indicates the correct answer
+            for pattern in answer_patterns:
+                match = re.match(pattern, line)
+                if match:
+                    correct_answer = match.group(2)
+                    break
         
-        # Make sure all options have some text
-        for i, opt in enumerate(options):
-            if not opt or len(opt.strip()) == 0:
-                if contains_hindi:
-                    options[i] = f"विकल्प {i+1}"
-                else:
-                    options[i] = f"Option {i+1}"
-        
-        # Ensure we have at least 2 options and no more than 4
-        while len(options) < 2:
-            if contains_hindi:
-                options.append(f"विकल्प {len(options)+1}")
-            else:
-                options.append(f"Option {len(options)+1}")
-        
-        # Limit to 4 options maximum (Telegram poll requirement)
-        if len(options) > 4:
-            options = options[:4]
-            if correct_answer_index >= 4:
-                correct_answer_index = 0
-                
-        # Use a more specific category if detected language is Hindi
-        actual_category = category
-        if contains_hindi and not is_hindi_category:
-            actual_category = f"{category} (हिंदी)"
-        
-        # Format the question for the bot
-        formatted_question = {
-            "question": question_text,
-            "options": options,
-            "answer": correct_answer_index,
-            "category": actual_category
-        }
-        
-        # Ensure we have a valid question
-        if len(question_text) >= 5 and len(options) >= 2:
-            formatted_questions.append(formatted_question)
-            logger.info(f"Successfully formatted question with {len(options)} options")
-        else:
-            logger.warning(f"Skipping invalid question with {len(options)} options")
+        i += 1
     
-    logger.info(f"Formatted {len(formatted_questions)} questions successfully")
-    return formatted_questions
-
-# ====== Web Scraping Commands ======
+    # Don't forget to save the last question if any
+    if current_question and current_options:
+        # Map the correct answer letter to index
+        correct_index = 0  # Default to first option
+        if correct_answer:
+            # Try to find the correct answer in our options
+            for idx, (letter, _) in enumerate(current_options):
+                if letter.lower() == correct_answer.lower():
+                    correct_index = idx
+                    break
+        
+        # Create question data structure
+        q_data = {
+            'question': current_question,
+            'options': current_options.copy(),
+            'correct_answer': correct_index
+        }
+        questions.append(q_data)
+    
+    return questions
+    # ====== Web Scraping Commands ======
 # Define conversation states for web scraping
 WEB_URL, WEB_CATEGORY, WEB_CUSTOM_ID, WEB_CONFIRM = range(200, 204)
 
-# Quick scrape command to directly scrape and save questions
+# Quick scrape command to directly scrape and save question
+
 async def quick_scrape_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Command to directly scrape a URL and save questions with a custom ID
