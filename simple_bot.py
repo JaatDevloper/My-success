@@ -2162,7 +2162,7 @@ def scrape_quiz_content(url):
     else:
         return [], "No questions found in the content."
 
-def extract_questions_with_options(text):
+def format_questions_for_bot(text):
     """
     Extract questions and their options from text content.
     Works with both English and Hindi text.
