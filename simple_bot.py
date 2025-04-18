@@ -2162,9 +2162,30 @@ def scrape_quiz_content(url):
     else:
         return [], "No questions found in the content."
 
+"""
+INSTRUCTIONS:
+
+1. This file contains the fixed code for the format_questions_for_bot function.
+2. Replace your existing function with this fixed version.
+3. The rest of your bot code should remain unchanged.
+4. This fix ensures that actual option text is displayed instead of placeholders.
+
+HOW TO USE:
+1. Locate the format_questions_for_bot function in your main bot file
+2. Replace it with this fixed version
+3. Restart your bot
+"""
+
 def format_questions_for_bot(questions, category="Web Scraped"):
     """Format scraped questions for the bot's question format with improved option handling"""
     formatted_questions = []
+    
+    # Import logging and re if not already imported
+    import logging
+    import re
+    
+    # Set up logger for debugging
+    logger = logging.getLogger(__name__)
     
     # Check if the category contains Hindi
     is_hindi_category = False
