@@ -2259,13 +2259,33 @@ def format_questions_for_bot(questions, category="Web Scraped"):
                     # Use words from the question as options
                     options = potential_answers[:4]
                 else:
-                    # Default options based on language
-                    if contains_hindi:
-                        options = ["राजा", "दूसरा विकल्प", "तीसरा विकल्प", "चौथा विकल्प"]
-                    else:
-                        options = ["First option", "Second option", "Third option", "Fourth option"]
-            
-            correct_answer_index = 0
+                    # Try to extract options from the content instead of using default placeholders
+options = []
+# Look for option patterns including Latin (A,B,C,D) and Hindi (अ,ब,स,द / क,ख,ग,ड) options
+option_pattern = re.compile(r'(?:^|\n)(?:\(([A-Dअबसदकखगड])\)|([A-Dअबसदकखगड])[\.\)]|\b([1-4])[\.\)])\s*(.*?)(?=\n(?:\([A-Dअबसदकखगड]\)|\b[A-Dअबसदकखगड][\.\)]|\b[1-4][\.\)]|\n|$))', re.MULTILINE)
+option_matches = option_pattern.findall(text)
+
+if option_matches and len(option_matches) >= 2:
+    # Process the matched options
+    for match in option_matches[:4]:  # Limit to 4 options
+        # The last group in the match contains the option text
+        option_text = match[-1].strip()
+        options.append(option_text)
+    
+    # If we couldn't find enough options, fill remaining with placeholders
+    while len(options) < 4:
+        if contains_hindi:
+            options.append(f"विकल्प {len(options)+1}")
+        else:
+            options.append(f"Option {len(options)+1}")
+else:
+    # Fallback to placeholders only if no options found
+    if contains_hindi:
+        options = ["पहला विकल्प", "दूसरा विकल्प", "तीसरा विकल्प", "चौथा विकल्प"]
+    else:
+        options = ["First option", "Second option", "Third option", "Fourth option"]
+
+correct_answer_index = 0
         
         # Make sure all options have some text
         for i, opt in enumerate(options):
