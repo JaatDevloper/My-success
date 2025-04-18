@@ -2259,8 +2259,10 @@ def format_questions_for_bot(questions, category="Web Scraped"):
                     # Use words from the question as options
                     options = potential_answers[:4]
                 else:
+                    
                     # Try to extract options from the content instead of using default placeholders
-options = []
+                    options = []
+                    
 # Look for option patterns including Latin (A,B,C,D) and Hindi (अ,ब,स,द / क,ख,ग,ड) options
 option_pattern = re.compile(r'(?:^|\n)(?:\(([A-Dअबसदकखगड])\)|([A-Dअबसदकखगड])[\.\)]|\b([1-4])[\.\)])\s*(.*?)(?=\n(?:\([A-Dअबसदकखगड]\)|\b[A-Dअबसदकखगड][\.\)]|\b[1-4][\.\)]|\n|$))', re.MULTILINE)
 option_matches = option_pattern.findall(text)
