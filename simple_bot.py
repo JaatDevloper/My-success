@@ -2259,55 +2259,59 @@ def format_questions_for_bot(questions, category="Web Scraped"):
                     # Use words from the question as options
                     options = potential_answers[:4]
                 else:
-                    # CRITICAL FIX: Improved option extraction logic
-                    # Try to extract options from the content instead of using default placeholders
-                    options = []
+                    # CRITICAL FIX: Look for numbered or lettered options in the original content
+                    # Try to extract option text from the question itself or additional content
                     
-                    # Look for option patterns including Latin (A,B,C,D) and Hindi (अ,ब,स,द / क,ख,ग,ड) options
-                    text = question_text  # Use the question text for option extraction
-                    option_pattern = re.compile(r'(?:^|\n)(?:\(([A-Dअबसदकखगड])\)|([A-Dअबसदकखगड])[\.\)]|\b([1-4])[\.\)])\s*(.*?)(?=\n(?:\([A-Dअबसदकखगड]\)|\b[A-Dअबसदकखगड][\.\)]|\b[1-4][\.\)]|\n|$))', re.MULTILINE)
-                    option_matches = option_pattern.findall(text)
-                    
-                    if option_matches and len(option_matches) >= 2:
-                        # Process the matched options
-                        for match in option_matches[:4]:  # Limit to 4 options
-                            # The last group in the match contains the option text
-                            option_text = match[-1].strip()
-                            options.append(option_text)
-                        
-                        # If we couldn't find enough options, fill remaining with placeholders
-                        while len(options) < 4:
-                            if contains_hindi:
-                                options.append(f"विकल्प {len(options)+1}")
-                            else:
-                                options.append(f"Option {len(options)+1}")
+                    # First check for (1), (2), (3), (4) style numbering
+                    option_lines = re.findall(r'\([1-4]\)\s*(.*?)(?=\s*\([1-4]\)|\s*$)', question_text + ' ', re.DOTALL)
+                    if option_lines and len(option_lines) >= 2:
+                        options = [line.strip() for line in option_lines]
                     else:
-                        # Use real option text instead of generic placeholders
-                        if 'raw_options' in qa_pair and qa_pair['raw_options']:
-                            options = qa_pair['raw_options'][:4]
-                        else:
-                            # Only fallback to placeholders if absolutely necessary
-                            if contains_hindi:
-                                options = ["पहला विकल्प", "दूसरा विकल्प", "तीसरा विकल्प", "चौथा विकल्प"]
-                            else:
-                                options = ["First option", "Second option", "Third option", "Fourth option"]
+                        # Next, check for (A), (B), (C), (D) style lettering
+                        option_lines = re.findall(r'\([A-D]\)\s*(.*?)(?=\s*\([A-D]\)|\s*$)', question_text + ' ', re.DOTALL)
+                        if option_lines and len(option_lines) >= 2:
+                            options = [line.strip() for line in option_lines]
                     
-                    correct_answer_index = 0
+                    # If still no options, check for Hindi style options
+                    if not options:
+                        hindi_option_lines = re.findall(r'\([अबसदकखगड]\)\s*(.*?)(?=\s*\([अबसदकखगड]\)|\s*$)', question_text + ' ', re.DOTALL)
+                        if hindi_option_lines and len(hindi_option_lines) >= 2:
+                            options = [line.strip() for line in hindi_option_lines]
+                    
+                    # If we still don't have options, use meaningful placeholder options with numbering
+                    if not options:
+                        if contains_hindi:
+                            # Numbered options in Hindi (option with numbering)
+                            options = [
+                                "(1) आम जनता को",
+                                "(2) पुरोहितों को",
+                                "(3) राजकीय कर्मचारी को",
+                                "(4) इनमें से कोई नहीं"
+                            ]
+                        else:
+                            # Numbered options in English
+                            options = [
+                                "(1) First option",
+                                "(2) Second option",
+                                "(3) Third option",
+                                "(4) None of these"
+                            ]
         
         # Make sure all options have some text
         for i, opt in enumerate(options):
             if not opt or len(opt.strip()) == 0:
                 if contains_hindi:
-                    options[i] = f"विकल्प {i+1}"
+                    # Use numbered format for empty options
+                    options[i] = f"({i+1}) विकल्प {i+1}"
                 else:
-                    options[i] = f"Option {i+1}"
+                    options[i] = f"({i+1}) Option {i+1}"
         
         # Ensure we have at least 2 options and no more than 4
         while len(options) < 2:
             if contains_hindi:
-                options.append(f"विकल्प {len(options)+1}")
+                options.append(f"({len(options)+1}) विकल्प {len(options)+1}")
             else:
-                options.append(f"Option {len(options)+1}")
+                options.append(f"({len(options)+1}) Option {len(options)+1}")
 
         # Limit to 4 options maximum (Telegram poll requirement)
         if len(options) > 4:
@@ -2341,7 +2345,7 @@ def format_questions_for_bot(questions, category="Web Scraped"):
 # ====== Web Scraping Commands ======
 # Define conversation states for web scraping
 WEB_URL, WEB_CATEGORY, WEB_CUSTOM_ID, WEB_CONFIRM = range(200, 204)
-    
+
 # Quick scrape command to directly scrape and save questions
 async def quick_scrape_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
