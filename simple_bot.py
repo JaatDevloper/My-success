@@ -2261,7 +2261,7 @@ def format_questions_for_bot(questions, category="Web Scraped"):
                 else:
                     # Default options based on language
                     if contains_hindi:
-                        options = ["पहला एक", "दूसरा विकल्प", "तीसरा विकल्प", "चौथा विकल्प"]
+                        options = ["राजा", "दूसरा विकल्प", "तीसरा विकल्प", "चौथा विकल्प"]
                     else:
                         options = ["First option", "Second option", "Third option", "Fourth option"]
             
