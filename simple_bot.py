@@ -2186,7 +2186,7 @@ def format_questions_for_bot(questions, category="Web Scraped"):
         if 'question' not in qa_pair:
             logger.warning("Skipping question without 'question' field")
             continue
-            
+
         question_text = qa_pair['question']
         
         # Skip questions that are too short or likely not actual questions
@@ -2259,35 +2259,40 @@ def format_questions_for_bot(questions, category="Web Scraped"):
                     # Use words from the question as options
                     options = potential_answers[:4]
                 else:
-                    
+                    # CRITICAL FIX: Improved option extraction logic
                     # Try to extract options from the content instead of using default placeholders
                     options = []
                     
-# Look for option patterns including Latin (A,B,C,D) and Hindi (अ,ब,स,द / क,ख,ग,ड) options
-option_pattern = re.compile(r'(?:^|\n)(?:\(([A-Dअबसदकखगड])\)|([A-Dअबसदकखगड])[\.\)]|\b([1-4])[\.\)])\s*(.*?)(?=\n(?:\([A-Dअबसदकखगड]\)|\b[A-Dअबसदकखगड][\.\)]|\b[1-4][\.\)]|\n|$))', re.MULTILINE)
-option_matches = option_pattern.findall(text)
-
-if option_matches and len(option_matches) >= 2:
-    # Process the matched options
-    for match in option_matches[:4]:  # Limit to 4 options
-        # The last group in the match contains the option text
-        option_text = match[-1].strip()
-        options.append(option_text)
-    
-    # If we couldn't find enough options, fill remaining with placeholders
-    while len(options) < 4:
-        if contains_hindi:
-            options.append(f"विकल्प {len(options)+1}")
-        else:
-            options.append(f"Option {len(options)+1}")
-else:
-    # Fallback to placeholders only if no options found
-    if contains_hindi:
-        options = ["पहला विकल्प", "दूसरा विकल्प", "तीसरा विकल्प", "चौथा विकल्प"]
-    else:
-        options = ["First option", "Second option", "Third option", "Fourth option"]
-
-correct_answer_index = 0
+                    # Look for option patterns including Latin (A,B,C,D) and Hindi (अ,ब,स,द / क,ख,ग,ड) options
+                    text = question_text  # Use the question text for option extraction
+                    option_pattern = re.compile(r'(?:^|\n)(?:\(([A-Dअबसदकखगड])\)|([A-Dअबसदकखगड])[\.\)]|\b([1-4])[\.\)])\s*(.*?)(?=\n(?:\([A-Dअबसदकखगड]\)|\b[A-Dअबसदकखगड][\.\)]|\b[1-4][\.\)]|\n|$))', re.MULTILINE)
+                    option_matches = option_pattern.findall(text)
+                    
+                    if option_matches and len(option_matches) >= 2:
+                        # Process the matched options
+                        for match in option_matches[:4]:  # Limit to 4 options
+                            # The last group in the match contains the option text
+                            option_text = match[-1].strip()
+                            options.append(option_text)
+                        
+                        # If we couldn't find enough options, fill remaining with placeholders
+                        while len(options) < 4:
+                            if contains_hindi:
+                                options.append(f"विकल्प {len(options)+1}")
+                            else:
+                                options.append(f"Option {len(options)+1}")
+                    else:
+                        # Use real option text instead of generic placeholders
+                        if 'raw_options' in qa_pair and qa_pair['raw_options']:
+                            options = qa_pair['raw_options'][:4]
+                        else:
+                            # Only fallback to placeholders if absolutely necessary
+                            if contains_hindi:
+                                options = ["पहला विकल्प", "दूसरा विकल्प", "तीसरा विकल्प", "चौथा विकल्प"]
+                            else:
+                                options = ["First option", "Second option", "Third option", "Fourth option"]
+                    
+                    correct_answer_index = 0
         
         # Make sure all options have some text
         for i, opt in enumerate(options):
@@ -2303,11 +2308,11 @@ correct_answer_index = 0
                 options.append(f"विकल्प {len(options)+1}")
             else:
                 options.append(f"Option {len(options)+1}")
-        
+
         # Limit to 4 options maximum (Telegram poll requirement)
         if len(options) > 4:
             options = options[:4]
-            if correct_answer_index >= 4:
+            if correct_answer_index is not None and correct_answer_index >= 4:
                 correct_answer_index = 0
                 
         # Use a more specific category if detected language is Hindi
@@ -2319,10 +2324,10 @@ correct_answer_index = 0
         formatted_question = {
             "question": question_text,
             "options": options,
-            "answer": correct_answer_index,
+            "answer": correct_answer_index if correct_answer_index is not None else 0,
             "category": actual_category
         }
-        
+
         # Ensure we have a valid question
         if len(question_text) >= 5 and len(options) >= 2:
             formatted_questions.append(formatted_question)
@@ -2336,7 +2341,7 @@ correct_answer_index = 0
 # ====== Web Scraping Commands ======
 # Define conversation states for web scraping
 WEB_URL, WEB_CATEGORY, WEB_CUSTOM_ID, WEB_CONFIRM = range(200, 204)
-
+    
 # Quick scrape command to directly scrape and save questions
 async def quick_scrape_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
