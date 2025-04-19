@@ -145,7 +145,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Bot token from environment variable
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8063036514:AAFJzt2HgR13_bT_zCZKLJs73S7uneZcx8o")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "7631768276:AAEHxHv8uyqs5r7qqlFUkTVEJnHOH89DyfI")
 
 # Conversation states
 QUESTION, OPTIONS, ANSWER, CATEGORY = range(4)
