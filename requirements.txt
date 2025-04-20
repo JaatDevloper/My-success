@@ -14,3 +14,4 @@ trafilatura
 PyMuPDF
 pdfplumber
 langdetect
+FPDF
