@@ -15,4 +15,3 @@ PyMuPDF
 pdfplumber
 langdetect
 FPDF
-fpdf
