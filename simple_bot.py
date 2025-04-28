@@ -3053,16 +3053,240 @@ async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"🔄 Generating PDF for Quiz #{quiz_id}..."
         )
         
-        # Create the PDF Generator
-        from pdf_generator import QuizPDFGenerator
-        pdf_generator = QuizPDFGenerator()
+        # Create PDF directory
+        pdf_dir = os.path.abspath("pdf_results")
+        os.makedirs(pdf_dir, exist_ok=True)
         
-        # Generate the PDF
-        result_file_path = pdf_generator.generate_quiz_pdf(quiz_questions, quiz_id)
+        # Generate unique filename
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        if result_file_path and result_file_path.endswith('.pdf'):
-            # We have a PDF file - send it
-            with open(result_file_path, 'rb') as pdf_file:
+        # First try ReportLab (better Unicode support for Hindi)
+        pdf_created = False
+        pdf_path = ""
+        
+        # Check if ReportLab is available
+        reportlab_available = False
+        try:
+            from reportlab.lib.pagesizes import letter
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.units import inch
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            reportlab_available = True
+        except ImportError:
+            reportlab_available = False
+        
+        if reportlab_available:
+            try:
+                pdf_filename = f"quiz_{quiz_id}_{timestamp}.pdf"
+                pdf_path = os.path.join(pdf_dir, pdf_filename)
+                
+                # Create PDF document
+                doc = SimpleDocTemplate(
+                    pdf_path,
+                    pagesize=letter,
+                    rightMargin=72,
+                    leftMargin=72,
+                    topMargin=72,
+                    bottomMargin=72
+                )
+                
+                # Define styles
+                styles = getSampleStyleSheet()
+                title_style = ParagraphStyle(
+                    'Title',
+                    parent=styles['Heading1'],
+                    fontName='Helvetica-Bold',
+                    fontSize=16,
+                    alignment=1,
+                    spaceAfter=12
+                )
+                
+                question_style = ParagraphStyle(
+                    'Question',
+                    parent=styles['Normal'],
+                    fontName='Helvetica-Bold',
+                    fontSize=12,
+                    leading=14,
+                    spaceBefore=12
+                )
+                
+                option_style = ParagraphStyle(
+                    'Option',
+                    parent=styles['Normal'],
+                    fontName='Helvetica',
+                    fontSize=11,
+                    leftIndent=20,
+                    leading=13
+                )
+                
+                # Create document elements
+                elements = []
+                
+                # Add title
+                elements.append(Paragraph(f"Quiz #{quiz_id} - Questions and Answers", title_style))
+                elements.append(Paragraph(f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 
+                                        styles['Italic']))
+                elements.append(Spacer(1, 0.25*inch))
+                
+                # Add questions
+                for i, question_data in enumerate(quiz_questions, 1):
+                    question_text = str(question_data.get('question', f'Question {i}'))
+                    options = question_data.get('options', [])
+                    correct_index = int(question_data.get('answer', 0))
+                    
+                    # Add question
+                    elements.append(Paragraph(f"Q{i}. {question_text}", question_style))
+                    
+                    # Add options
+                    for j, option in enumerate(options):
+                        option_text = str(option)
+                        
+                        # Mark correct answer with ✅ symbol
+                        if j == correct_index:
+                            elements.append(Paragraph(f"{chr(65+j)}. {option_text} ✅", option_style))
+                        else:
+                            elements.append(Paragraph(f"{chr(65+j)}. {option_text}", option_style))
+                    
+                    elements.append(Spacer(1, 0.15*inch))
+                
+                # Build PDF
+                doc.build(elements)
+                pdf_created = os.path.exists(pdf_path)
+                
+            except Exception as reportlab_err:
+                logger.error(f"ReportLab PDF generation failed: {reportlab_err}")
+                pdf_created = False
+        
+        # If ReportLab failed, try FPDF as fallback
+        if not pdf_created:
+            try:
+                from fpdf import FPDF
+                fpdf_available = True
+            except ImportError:
+                fpdf_available = False
+            
+            if fpdf_available:
+                try:
+                    pdf_filename = f"quiz_{quiz_id}_{timestamp}_fpdf.pdf"
+                    pdf_path = os.path.join(pdf_dir, pdf_filename)
+                    
+                    # Create PDF with FPDF
+                    pdf = FPDF()
+                    pdf.add_page()
+                    
+                    # Add title
+                    pdf.set_font("Arial", "B", 16)
+                    pdf.cell(0, 10, f"Quiz #{quiz_id} - Questions and Answers", 0, 1, "C")
+                    pdf.ln(5)
+                    
+                    # Add timestamp
+                    pdf.set_font("Arial", "", 10)
+                    pdf.cell(0, 10, f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 0, 1, "R")
+                    pdf.ln(5)
+                    
+                    # Add questions with ASCII-safe text
+                    for i, question_data in enumerate(quiz_questions, 1):
+                        # Get question safely for ASCII PDF
+                        safe_question = f"Question {i}"
+                        try:
+                            q_text = str(question_data.get('question', f'Question {i}'))
+                            # Check if encodable as Latin-1
+                            q_text.encode('latin-1', 'replace')
+                            safe_question = q_text
+                        except:
+                            pass
+                        
+                        # Add question
+                        pdf.set_font("Arial", "B", 12)
+                        pdf.multi_cell(0, 10, f"Q{i}. {safe_question}", 0, "L")
+                        
+                        # Get options safely
+                        options = question_data.get('options', [])
+                        correct_index = int(question_data.get('answer', 0))
+                        
+                        # Add options
+                        pdf.set_font("Arial", "", 11)
+                        for j, option in enumerate(options):
+                            # Convert option to safe string
+                            safe_option = f"Option {j+1}"
+                            try:
+                                opt_text = str(option)
+                                # Check if encodable
+                                opt_text.encode('latin-1', 'replace')
+                                safe_option = opt_text
+                            except:
+                                pass
+                            
+                            # Mark correct answer
+                            if j == correct_index:
+                                # Try to use checkmark symbol, fallback to "(CORRECT)"
+                                try:
+                                    option_text = f"{chr(65+j)}. {safe_option} ✓"
+                                    # Test if encodable
+                                    option_text.encode('latin-1', 'replace')
+                                except:
+                                    option_text = f"{chr(65+j)}. {safe_option} (CORRECT)"
+                            else:
+                                option_text = f"{chr(65+j)}. {safe_option}"
+                            
+                            # Add to PDF
+                            pdf.set_x(20)
+                            pdf.multi_cell(0, 8, option_text, 0, "L")
+                        
+                        pdf.ln(5)
+                    
+                    # Save PDF
+                    pdf.output(pdf_path)
+                    pdf_created = os.path.exists(pdf_path)
+                    
+                except Exception as fpdf_err:
+                    logger.error(f"FPDF generation failed: {fpdf_err}")
+                    pdf_created = False
+        
+        # Create text file as final fallback (always works with all character sets)
+        text_created = False
+        text_path = ""
+        
+        try:
+            text_filename = f"quiz_{quiz_id}_{timestamp}.txt"
+            text_path = os.path.join(pdf_dir, text_filename)
+            
+            with open(text_path, 'w', encoding='utf-8') as f:
+                f.write(f"Quiz #{quiz_id} - Questions and Answers\n")
+                f.write(f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+                
+                # Add questions
+                for i, question_data in enumerate(quiz_questions, 1):
+                    question_text = str(question_data.get('question', f'Question {i}'))
+                    options = question_data.get('options', [])
+                    correct_index = int(question_data.get('answer', 0))
+                    
+                    # Write question
+                    f.write(f"Q{i}. {question_text}\n")
+                    
+                    # Write options
+                    for j, option in enumerate(options):
+                        option_text = str(option)
+                        
+                        # Mark correct answer
+                        if j == correct_index:
+                            f.write(f"   {chr(65+j)}. {option_text} ✅\n")
+                        else:
+                            f.write(f"   {chr(65+j)}. {option_text}\n")
+                    
+                    f.write("\n")
+            
+            text_created = os.path.exists(text_path)
+            
+        except Exception as text_err:
+            logger.error(f"Text file creation failed: {text_err}")
+            text_created = False
+        
+        # Send the appropriate files based on what was created successfully
+        if pdf_created:
+            # Send PDF file
+            with open(pdf_path, 'rb') as pdf_file:
                 await context.bot.send_document(
                     chat_id=chat_id,
                     document=pdf_file,
@@ -3076,10 +3300,9 @@ async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 message_id=processing_message.message_id,
                 text=f"✅ Quiz #{quiz_id} PDF has been generated and sent!"
             )
-            
-        elif result_file_path and result_file_path.endswith('.txt'):
-            # We only have a text file - send it as fallback
-            with open(result_file_path, 'rb') as text_file:
+        elif text_created:
+            # Send text file as fallback
+            with open(text_path, 'rb') as text_file:
                 await context.bot.send_document(
                     chat_id=chat_id,
                     document=text_file,
@@ -3093,7 +3316,6 @@ async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 message_id=processing_message.message_id,
                 text=f"✅ Quiz #{quiz_id} has been sent as a text file (PDF generation failed)"
             )
-            
         else:
             # All file operations failed
             await context.bot.edit_message_text(
@@ -3109,7 +3331,7 @@ async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id=chat_id,
             message_id=processing_message.message_id,
             text=f"❌ An error occurred: {str(e)[:50]}..."
-        )
+                    )
 
 async def pdf_info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show information about PDF import feature."""
