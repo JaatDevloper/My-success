@@ -2995,7 +2995,7 @@ async def quiz_with_id_command(update: Update, context: ContextTypes.DEFAULT_TYP
         return
     
     # Show negative marking options
-    await show_negative_marking_options(update, context, quiz_id, questions
+    await show_negative_marking_options(update, context, quiz_id, questions)
 
 async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle the /quizpdf command to generate a PDF with quiz questions and answers"""
