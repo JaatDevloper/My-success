@@ -3031,8 +3031,8 @@ async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # If no questions found, try fallback IDs
         if not quiz_questions:
             for fallback_id in ['1', '2', '123']:
-                quiz_questions = questions.get(fallback_id, [])
-                if quiz_questions:
+                if fallback_id in questions:
+                    quiz_questions = questions[fallback_id]
                     quiz_id = fallback_id
                     break
         
@@ -3049,17 +3049,17 @@ async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.edit_message_text(
             chat_id=chat_id,
             message_id=processing_message.message_id,
-            text=f"🔄 Generating PDF for Quiz #{quiz_id}..."
+            text=f"🔄 Generating files for Quiz #{quiz_id}..."
         )
         
-        # Create PDF directory
+        # Create directory
         pdf_dir = os.path.abspath(PDF_RESULTS_DIR)
         os.makedirs(pdf_dir, exist_ok=True)
         
-        # Generate unique filename
+        # Generate unique timestamp
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        # STEP 1: ALWAYS CREATE TEXT FILE FIRST (most reliable for Hindi text)
+        # Create text file with proper UTF-8 encoding
         text_created = False
         text_path = ""
         
@@ -3067,7 +3067,6 @@ async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text_filename = f"quiz_{quiz_id}_{timestamp}.txt"
             text_path = os.path.join(pdf_dir, text_filename)
             
-            # Use UTF-8 encoding for Hindi text compatibility
             with open(text_path, 'w', encoding='utf-8') as f:
                 f.write(f"Quiz #{quiz_id} - Questions and Answers\n")
                 f.write(f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
@@ -3099,104 +3098,9 @@ async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.error(f"Text file creation failed: {text_err}")
             text_created = False
         
-        # STEP 2: TRY TO CREATE A SIMPLE PDF WITH FPDF
-        pdf_created = False
-        pdf_path = ""
-        
-        try:
-            # Check if FPDF is available
-            if FPDF_AVAILABLE:
-                pdf_filename = f"quiz_{quiz_id}_{timestamp}.pdf"
-                pdf_path = os.path.join(pdf_dir, pdf_filename)
-                
-                # Create PDF with FPDF
-                pdf = FPDF()
-                pdf.add_page()
-                
-                # Add title
-                pdf.set_font("Arial", "B", 16)
-                pdf.cell(0, 10, f"Quiz #{quiz_id} - Questions and Answers", 0, 1, "C")
-                pdf.ln(5)
-                
-                # Add timestamp
-                pdf.set_font("Arial", "", 10)
-                pdf.cell(0, 10, f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 0, 1, "R")
-                pdf.ln(5)
-                
-                # Add note about Hindi text
-                pdf.set_font("Arial", "I", 10)
-                pdf.cell(0, 10, "Note: For best viewing of Hindi text, please use the accompanying text file.", 0, 1)
-                pdf.ln(5)
-                
-                # Add questions - safely handle non-Latin characters by replacing with placeholder text
-                for i, question_data in enumerate(quiz_questions, 1):
-                    # Convert to ASCII-safe string for the PDF
-                    question = str(question_data.get('question', f'Question {i}'))
-                    
-                    # Try to use direct text first, but have a fallback for non-Latin chars
-                    try:
-                        # Check if string can be encoded as Latin-1 (ASCII)
-                        question.encode('latin-1')
-                        safe_question = question
-                    except UnicodeEncodeError:
-                        # For Hindi text, use a placeholder
-                        safe_question = f"Question {i} (See text file for Hindi content)"
-                    
-                    # Add question
-                    pdf.set_font("Arial", "B", 12)
-                    pdf.multi_cell(0, 10, f"Q{i}. {safe_question}", 0)
-                    
-                    # Get options
-                    options = question_data.get('options', [])
-                    correct_index = int(question_data.get('answer', 0))
-                    
-                    # Add options
-                    pdf.set_font("Arial", "", 11)
-                    for j, option in enumerate(options):
-                        # Convert to ASCII-safe string
-                        opt = str(option)
-                        
-                        try:
-                            # Check if string can be encoded as Latin-1 (ASCII)
-                            opt.encode('latin-1')
-                            safe_option = opt
-                        except UnicodeEncodeError:
-                            # For Hindi text, use a placeholder
-                            safe_option = f"Option {chr(65+j)} (See text file for details)"
-                        
-                        # Mark correct answer
-                        if j == correct_index:
-                            option_text = f"{chr(65+j)}. {safe_option} (CORRECT)"
-                        else:
-                            option_text = f"{chr(65+j)}. {safe_option}"
-                        
-                        # Add to PDF
-                        pdf.set_x(20)
-                        pdf.multi_cell(0, 8, option_text, 0)
-                    
-                    pdf.ln(5)
-                
-                # Save PDF
-                pdf.output(pdf_path)
-                pdf_created = os.path.exists(pdf_path)
-                
-        except Exception as pdf_err:
-            logger.error(f"PDF generation failed: {pdf_err}")
-            pdf_created = False
-        
-        # Send the created files
-        if pdf_created:
-            # Send PDF file
-            with open(pdf_path, 'rb') as pdf_file:
-                await context.bot.send_document(
-                    chat_id=chat_id,
-                    document=pdf_file,
-                    filename=f"Quiz_{quiz_id}_Questions.pdf",
-                    caption=f"📋 Quiz #{quiz_id} - Questions and Answers"
-                )
-        
+        # Send the created file
         if text_created:
-            # Always send text file (best compatibility with Hindi)
+            # Send text file
             with open(text_path, 'rb') as text_file:
                 await context.bot.send_document(
                     chat_id=chat_id,
@@ -3205,21 +3109,14 @@ async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     caption=f"📋 Quiz #{quiz_id} - Questions and Answers (Text Format)"
                 )
             
-            # Update message
-            if pdf_created:
-                await context.bot.edit_message_text(
-                    chat_id=chat_id,
-                    message_id=processing_message.message_id,
-                    text=f"✅ Quiz #{quiz_id} PDF and TXT files have been generated and sent!"
-                )
-            else:
-                await context.bot.edit_message_text(
-                    chat_id=chat_id,
-                    message_id=processing_message.message_id,
-                    text=f"✅ Quiz #{quiz_id} has been sent as a text file (PDF generation failed)"
-                )
+            # Update success message
+            await context.bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=processing_message.message_id,
+                text=f"✅ Quiz #{quiz_id} text file has been generated and sent! For best viewing of Hindi text, open in a Unicode-compatible text editor."
+            )
         else:
-            # All file operations failed
+            # File creation failed
             await context.bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=processing_message.message_id,
@@ -3233,7 +3130,7 @@ async def quizpdf_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id=chat_id,
             message_id=processing_message.message_id,
             text=f"❌ An error occurred: {str(e)[:50]}..."
-                        )
+        )
 
 async def pdf_info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show information about PDF import feature."""
