@@ -1,0 +1,5 @@
+envVars:
+  - key: BOT_TOKEN
+    value: 7631768276:AAEUjV-iVGb1_6ZFWxF_VJH4hwsv6yBF4BI
+  - key: TELEGRAM_BOT_TOKEN
+    value: 7631768276:AAEUjV-iVGb1_6ZFWxF_VJH4hwsv6yBF4BI
