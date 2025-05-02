@@ -1286,30 +1286,31 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await start(update, context)
 
 async def features_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Show features message."""
-    features_text = (
-        "✨ <b>Welcome to QuizBot – Your Smart Quiz Companion!</b>\n\n"
-        "🚀 <b>Main Features:</b>\n"
-        "• ⚡ <b>Start a Quiz:</b> /quiz\n"
-        "• 📊 <b>Check Stats:</b> /stats\n"
-        "• ➕ <b>Add a Question:</b> /add\n"
-        "• ✏️ <b>Edit a Question:</b> /edit\n"
-        "• ❌ <b>Delete a Question:</b> /delete\n"
-        "• 🔄 <b>Poll to Quiz:</b> /poll2q\n"
-        "• ℹ️ <b>Help & Commands:</b> /help\n\n"
-
-        "📁 <b>File Import & Custom Quiz ID:</b>\n"
-        "• 📥 <b>Import from PDF:</b> /pdfimport\n"
-        "• 📝 <b>Import from TXT:</b> /txtimport\n"
-        "• 🆔 <b>Start Quiz by ID:</b> /quizid\n"
-        "• 📄 <b>PDF Info:</b> /pdfinfo\n\n"
-
-        "⚙️ <b>Advanced Settings:</b>\n"
-        "• ➖ <b>Enable Negative Marking:</b> /negmark\n"
-        "• 🧹 <b>Reset Penalties:</b> /resetpenalty\n"
-        "• ✋ <b>Stop Quiz Anytime:</b> /stop"
-    )
-    await update.message.reply_text(features_text, parse_mode="HTML")
+    """Show features message in Hindi."""
+    features_text = (
+        "विशेषताएँ:\n\n"
+        
+        "1. **क्विज़ शुरू करें** – /quiz\n"
+        "2. **स्टैट्स देखें** – /stats\n"
+        "3. **प्रश्न जोड़ें** – /add\n"
+        "4. **प्रश्न संपादित करें** – /edit\n"
+        "5. **प्रश्न हटाएं** – /delete\n"
+        "6. **पोल को क्विज़ में बदलें** – /poll2q\n"
+        "7. **मदद और कमांड्स** – /help\n\n"
+        
+        "फाइल आयात और कस्टम क्विज़ आईडी:\n"
+        "8. **PDF से आयात करें** – /pdfimport\n"
+        "9. **TXT से आयात करें** – /txtimport\n"
+        "10. **क्विज़ ID से शुरू करें** – /quizid\n"
+        "11. **PDF जानकारी प्राप्त करें** – /pdfinfo\n\n"
+        
+        "एडवांस क्विज़ सेटिंग्स:\n"
+        "12. **निगेटिव मार्किंग सक्षम करें** – /negmark\n"
+        "13. **पेनल्टी रिसेट करें** – /resetpenalty\n"
+        "14. **क्विज़ को कभी भी रोकें** – /stop"
+    )
+    
+    await update.message.reply_text(features_text)
     
     
 
