@@ -1302,13 +1302,13 @@ async def features_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 🔷 Smarter handling of previously completed quizzes.  
 🔷 Faster question parsing and loading.
 
-🚀 Upcoming Features
+ Upcoming Features
 
 🔶 Incomplete Quiz Recovery: Continue from where you left off.  
 🔶 Lag-Free Experience: Optimized performance for smooth navigation.  
 🔶 More Tools Coming Soon: Be ready for powerful and creative quiz utilities.
 
-📊 Live Tracker & Analysis
+ Live Tracker & Analysis
 
 ✅ Topper Comparison: Instantly compare your score with top performers.  
 ✅ Insightful Analytics: View attempt history, accuracy, and improvement trends.
