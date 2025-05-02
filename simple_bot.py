@@ -1286,32 +1286,40 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await start(update, context)
 
 async def features_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-     **Features of Negative Marking Quiz Bot** 
+    """Show a professionally crafted features overview with styled headings."""
+    
+    features_text = (
+        "*Welcome to the Negative Marking Quiz System*\n\n"
 
-Create Questions from TXT: Instantly convert plain text into quizzes.  
- 99.99% Uptime: Reliable performance with a robust backend.  
- Smart Cleanup: Automatically removes usernames, links, and extra clutter.  
- Auto Generate Quizzes: From Wikipedia, BBC, Britannica, and 20+ trusted sources.  
- One-Click Import: Instantly import Testbook questions using just the test link.  
- Official QuizBot Cloner: Clone full @quizbot quizzes instantly and accurately.  
- Poll-to-Quiz Conversion: Convert polls from channels or groups into playable quizzes.
+        "Designed for serious learners and educators, this platform offers a robust set of tools "
+        "to create, manage, and analyze quizzes with precision and flexibility.\n\n"
 
- **Latest Update**
+        "*Core Capabilities:*\n"
+        "- Create custom quizzes with advanced scoring rules\n"
+        "- Track real-time performance and generate detailed analytics\n"
+        "- Manage questions efficiently — add, modify, or remove as needed\n"
+        "- Convert Telegram polls into structured quizzes in seconds\n\n"
 
- Enhanced support for Testbook links.  
- Smarter handling of previously completed quizzes.  
- Faster question parsing and loading.
+        "*Smart Import Options:*\n"
+        "- Seamlessly import questions from PDF documents\n"
+        "- Integrate content from TXT files with instant formatting\n"
+        "- Retrieve quiz metadata and structure for review and planning\n\n"
 
- **Upcoming Features**
+        "*Adaptive Quiz Settings:*\n"
+        "- Enable negative marking with customizable penalties\n"
+        "- Reset penalty data for a fresh evaluation cycle\n"
+        "- Interrupt any quiz session instantly when needed\n\n"
 
- Incomplete Quiz Recovery: Continue from where you left off.  
- Lag-Free Experience: Optimized performance for smooth navigation.  
- More Tools Coming Soon: Be ready for powerful and creative quiz utilities.
+        "*Unique Quiz Identification:*\n"
+        "- Assign unique IDs to quizzes for easy replay and sharing\n"
+        "- Access and manage your quizzes using ID-based referencing\n\n"
 
- **Live Tracker & Analysis**
+        "*Need guidance?* Navigate to the Help section in the menu for detailed instructions "
+        "on using each feature effectively."
+    )
 
- Topper Comparison: Instantly compare your score with top performers.  
- Insightful Analytics: View attempt history, accuracy, and improvement trends.
+    await update.message.reply_text(features_text, parse_mode='MarkdownV2')
+    
 
     
     
