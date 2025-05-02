@@ -1286,34 +1286,37 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await start(update, context)
 
 async def features_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Show features message with a professional and clean format."""
-    
+    """Show a robust, professional features overview using Telegram quote style."""
+
     features_text = (
-        "Welcome to the Negative Marking Quiz Bot!\n\n"
-        
-        "This bot offers a range of features to enhance your quiz experience:\n\n"
-        
-        "1. **Quiz Management**\n"
-        "   - Create, take, and manage quizzes with negative marking\n"
-        "   - Track performance and analyze results\n\n"
-        
-        "2. **File Import**\n"
-        "   - Import quiz questions from PDF files\n"
-        "   - Import questions from text files (TXT format)\n\n"
-        
-        "3. **Advanced Quiz Settings**\n"
-        "   - Enable negative marking and set penalties\n"
-        "   - Reset penalties and stop quizzes anytime\n\n"
-        
-        "4. **Custom Quiz IDs**\n"
-        "   - Start quizzes by their unique ID\n"
-        "   - Manage custom quiz IDs for easy access\n\n"
-        
-        "For more details on each feature, type /help and follow the instructions.\n\n"
-        
-        "To get started, simply choose a feature from the list or use the /help command for guidance."
+        "> Welcome to the Negative Marking Quiz System\n"
+        ">\n"
+        "> Designed for serious learners and educators, this platform offers a robust set of tools\n"
+        "> to create, manage, and analyze quizzes with precision and flexibility.\n"
+        ">\n"
+        "> 📊 Core Capabilities\n"
+        "> • Create custom quizzes with advanced scoring rules\n"
+        "> • Track real-time performance and generate detailed analytics\n"
+        "> • Manage questions efficiently — add, modify, or remove as needed\n"
+        "> • Convert Telegram polls into structured quizzes in seconds\n"
+        ">\n"
+        "> 📁 Smart Import Options\n"
+        "> • Seamlessly import questions from PDF documents\n"
+        "> • Integrate content from TXT files with instant formatting\n"
+        "> • Retrieve quiz metadata and structure for review and planning\n"
+        ">\n"
+        "> ⚙️ Adaptive Quiz Settings\n"
+        "> • Enable negative marking with customizable penalties\n"
+        "> • Reset penalty data for a fresh evaluation cycle\n"
+        "> • Interrupt any quiz session instantly when needed\n"
+        ">\n"
+        "> 🗂️ Unique Quiz Identification\n"
+        "> • Assign unique IDs to quizzes for easy replay and sharing\n"
+        "> • Access and manage your quizzes using ID-based referencing\n"
+        ">\n"
+        "> Need guidance? Visit the Help section in the bot menu for detailed instructions."
     )
-    
+
     await update.message.reply_text(features_text)
     
     
