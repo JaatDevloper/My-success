@@ -1286,32 +1286,32 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await start(update, context)
 
 async def features_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-     Features of Negative Marking Quiz Bot 
+     **Features of Negative Marking Quiz Bot** 
 
-🔷 Create Questions from TXT: Instantly convert plain text into quizzes.  
-🔷 99.99% Uptime: Reliable performance with a robust backend.  
-🔷 Smart Cleanup: Automatically removes usernames, links, and extra clutter.  
-🔷 Auto Generate Quizzes: From Wikipedia, BBC, Britannica, and 20+ trusted sources.  
-🔷 One-Click Import: Instantly import Testbook questions using just the test link.  
-🔷 Official QuizBot Cloner: Clone full @quizbot quizzes instantly and accurately.  
-🔷 Poll-to-Quiz Conversion: Convert polls from channels or groups into playable quizzes.
+Create Questions from TXT: Instantly convert plain text into quizzes.  
+ 99.99% Uptime: Reliable performance with a robust backend.  
+ Smart Cleanup: Automatically removes usernames, links, and extra clutter.  
+ Auto Generate Quizzes: From Wikipedia, BBC, Britannica, and 20+ trusted sources.  
+ One-Click Import: Instantly import Testbook questions using just the test link.  
+ Official QuizBot Cloner: Clone full @quizbot quizzes instantly and accurately.  
+ Poll-to-Quiz Conversion: Convert polls from channels or groups into playable quizzes.
 
-🆕 Latest Update
+ **Latest Update**
 
-🔷 Enhanced support for Testbook links.  
-🔷 Smarter handling of previously completed quizzes.  
-🔷 Faster question parsing and loading.
+ Enhanced support for Testbook links.  
+ Smarter handling of previously completed quizzes.  
+ Faster question parsing and loading.
 
- Upcoming Features
+ **Upcoming Features**
 
-🔶 Incomplete Quiz Recovery: Continue from where you left off.  
-🔶 Lag-Free Experience: Optimized performance for smooth navigation.  
-🔶 More Tools Coming Soon: Be ready for powerful and creative quiz utilities.
+ Incomplete Quiz Recovery: Continue from where you left off.  
+ Lag-Free Experience: Optimized performance for smooth navigation.  
+ More Tools Coming Soon: Be ready for powerful and creative quiz utilities.
 
- Live Tracker & Analysis
+ **Live Tracker & Analysis**
 
-✅ Topper Comparison: Instantly compare your score with top performers.  
-✅ Insightful Analytics: View attempt history, accuracy, and improvement trends.
+ Topper Comparison: Instantly compare your score with top performers.  
+ Insightful Analytics: View attempt history, accuracy, and improvement trends.
 
     
     
