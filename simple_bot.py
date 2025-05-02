@@ -1286,28 +1286,32 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await start(update, context)
 
 async def features_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Show features message in Hindi."""
+    """Show features message with a professional and clean format."""
+    
     features_text = (
-        "विशेषताएँ:\n\n"
+        "Welcome to the Negative Marking Quiz Bot!\n\n"
         
-        "1. **क्विज़ शुरू करें** – /quiz\n"
-        "2. **स्टैट्स देखें** – /stats\n"
-        "3. **प्रश्न जोड़ें** – /add\n"
-        "4. **प्रश्न संपादित करें** – /edit\n"
-        "5. **प्रश्न हटाएं** – /delete\n"
-        "6. **पोल को क्विज़ में बदलें** – /poll2q\n"
-        "7. **मदद और कमांड्स** – /help\n\n"
+        "This bot offers a range of features to enhance your quiz experience:\n\n"
         
-        "फाइल आयात और कस्टम क्विज़ आईडी:\n"
-        "8. **PDF से आयात करें** – /pdfimport\n"
-        "9. **TXT से आयात करें** – /txtimport\n"
-        "10. **क्विज़ ID से शुरू करें** – /quizid\n"
-        "11. **PDF जानकारी प्राप्त करें** – /pdfinfo\n\n"
+        "1. **Quiz Management**\n"
+        "   - Create, take, and manage quizzes with negative marking\n"
+        "   - Track performance and analyze results\n\n"
         
-        "एडवांस क्विज़ सेटिंग्स:\n"
-        "12. **निगेटिव मार्किंग सक्षम करें** – /negmark\n"
-        "13. **पेनल्टी रिसेट करें** – /resetpenalty\n"
-        "14. **क्विज़ को कभी भी रोकें** – /stop"
+        "2. **File Import**\n"
+        "   - Import quiz questions from PDF files\n"
+        "   - Import questions from text files (TXT format)\n\n"
+        
+        "3. **Advanced Quiz Settings**\n"
+        "   - Enable negative marking and set penalties\n"
+        "   - Reset penalties and stop quizzes anytime\n\n"
+        
+        "4. **Custom Quiz IDs**\n"
+        "   - Start quizzes by their unique ID\n"
+        "   - Manage custom quiz IDs for easy access\n\n"
+        
+        "For more details on each feature, type /help and follow the instructions.\n\n"
+        
+        "To get started, simply choose a feature from the list or use the /help command for guidance."
     )
     
     await update.message.reply_text(features_text)
