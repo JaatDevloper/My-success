@@ -1286,7 +1286,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await start(update, context)
 
 async def features_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-     Features of Negative Marking Quiz Bot 🚀
+     Features of Negative Marking Quiz Bot 
 
 🔷 Create Questions from TXT: Instantly convert plain text into quizzes.  
 🔷 99.99% Uptime: Reliable performance with a robust backend.  
