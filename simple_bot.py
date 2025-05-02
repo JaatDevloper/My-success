@@ -1286,29 +1286,31 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await start(update, context)
 
 async def features_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Show features message."""
-    features_text = (
-        "Here's what you can do:\n\n"
-        "• Start a Quiz – /quiz\n"
-        "• Check Stats – /stats\n"
-        "• Add a Question – /add\n"
-        "• Edit a Question – /edit\n"
-        "• Delete a Question – /delete\n"
-        "• Convert Polls to Quiz – /poll2q\n"
-        "• Help & Commands – /help\n\n"
-        
-        "File Import & Custom Quiz IDs:\n"
-        "• Import from PDF – /pdfimport\n"
-        "• Import from TXT – /txtimport\n"
-        "• Start Quiz by ID – /quizid\n"
-        "• Get PDF Info – /pdfinfo\n\n"
-        
-        "Advanced Quiz Settings:\n"
-        "• Enable Negative Marking – /negmark\n"
-        "• Reset Penalties – /resetpenalty\n"
-        "• Stop Quiz Anytime – /stop"
-    )
-    await update.message.reply_text(features_text)
+    """Show features message."""
+    features_text = (
+        "✨ <b>Welcome to QuizBot – Your Smart Quiz Companion!</b>\n\n"
+        "🚀 <b>Main Features:</b>\n"
+        "• ⚡ <b>Start a Quiz:</b> /quiz\n"
+        "• 📊 <b>Check Stats:</b> /stats\n"
+        "• ➕ <b>Add a Question:</b> /add\n"
+        "• ✏️ <b>Edit a Question:</b> /edit\n"
+        "• ❌ <b>Delete a Question:</b> /delete\n"
+        "• 🔄 <b>Poll to Quiz:</b> /poll2q\n"
+        "• ℹ️ <b>Help & Commands:</b> /help\n\n"
+
+        "📁 <b>File Import & Custom Quiz ID:</b>\n"
+        "• 📥 <b>Import from PDF:</b> /pdfimport\n"
+        "• 📝 <b>Import from TXT:</b> /txtimport\n"
+        "• 🆔 <b>Start Quiz by ID:</b> /quizid\n"
+        "• 📄 <b>PDF Info:</b> /pdfinfo\n\n"
+
+        "⚙️ <b>Advanced Settings:</b>\n"
+        "• ➖ <b>Enable Negative Marking:</b> /negmark\n"
+        "• 🧹 <b>Reset Penalties:</b> /resetpenalty\n"
+        "• ✋ <b>Stop Quiz Anytime:</b> /stop"
+    )
+    await update.message.reply_text(features_text, parse_mode="HTML")
+    
     
 
 # ---------- NEGATIVE MARKING COMMAND ADDITIONS ----------
