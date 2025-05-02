@@ -1287,29 +1287,29 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def features_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show features message."""
-    user = update.effective_user
     features_text = (
-        f"<b>𝗛𝗲𝗿𝗲'𝘀 𝘄𝗵𝗮𝘁 𝘆𝗼𝘂 𝗰𝗮𝗻 𝗱𝗼:</b>\n"
-        "• ⚡ <b>Start a Quiz:</b> /quiz\n"
-        "• 📊 <b>Check Stats:</b> /stats\n"
-        "• ➕ <b>Add Question:</b> /add\n"
-        "• ✏️ <b>Edit Question:</b> /edit\n"
-        "• ❌ <b>Delete Question:</b> /delete\n"
-        "• 🔄 <b>Poll to Quiz:</b> /poll2q\n"
-        "• ℹ️ <b>Help & Commands:</b> /help\n\n"
+        "Here's what you can do:\n\n"
+        "• Start a Quiz – /quiz\n"
+        "• Check Stats – /stats\n"
+        "• Add a Question – /add\n"
+        "• Edit a Question – /edit\n"
+        "• Delete a Question – /delete\n"
+        "• Convert Polls to Quiz – /poll2q\n"
+        "• Help & Commands – /help\n\n"
         
-        "📄 <b>𝗙𝗶𝗹𝗲 𝗜𝗺𝗽𝗼𝗿𝘁 & Custom ID:</b>\n"
-        "• 📥 <b>Import from PDF:</b> /pdfimport\n"
-        "• 📝 <b>Import from TXT:</b> /txtimport\n"
-        "• 🆔 <b>Start Quiz by ID:</b> /quizid\n"
-        "• ℹ️ <b>PDF Info:</b> /pdfinfo\n\n"
+        "File Import & Custom Quiz IDs:\n"
+        "• Import from PDF – /pdfimport\n"
+        "• Import from TXT – /txtimport\n"
+        "• Start Quiz by ID – /quizid\n"
+        "• Get PDF Info – /pdfinfo\n\n"
         
-        "⚙️ <b>𝗔𝗱𝘃𝗮𝗻𝗰𝗲𝗱 𝗤𝘂𝗶𝘇 𝗦𝗲𝘁𝘁𝗶𝗻𝗴𝘀:</b>\n"
-        "• ⚙️ <b>Negative Marking:</b> /negmark\n"
-        "• 🧹 <b>Reset Penalties:</b> /resetpenalty\n"
-        "• ✋ <b>Stop Quiz Anytime:</b> /stop\n\n"
+        "Advanced Quiz Settings:\n"
+        "• Enable Negative Marking – /negmark\n"
+        "• Reset Penalties – /resetpenalty\n"
+        "• Stop Quiz Anytime – /stop"
     )
-    await update.message.reply_html(features_text)
+    await update.message.reply_text(features_text)
+    
 
 # ---------- NEGATIVE MARKING COMMAND ADDITIONS ----------
 async def extended_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
