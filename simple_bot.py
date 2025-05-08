@@ -545,14 +545,14 @@ async def show_premium_subscription_message(update: Update, context: ContextType
         "• No channel subscription required\n"
         "• Priority support and updates\n\n"
         "🌟 <b>How to Get Premium:</b>\n"
-        "Contact <b>@JaatSuperme</b> and share your user ID for premium activation.\n\n"
+        "Contact <b>@JaatSupreme</b> and share your user ID for premium activation.\n\n"
         f"🆔 <b>Your ID:</b> <code>{update.effective_user.id}</code>\n\n"
         "<i>Simply copy your ID and send it to our admin to get premium access!</i>"
     )
     
     # Create keyboard with contact button
     keyboard = [
-        [InlineKeyboardButton("💬 Contact Admin", url="https://t.me/JaatSuperme")],
+        [InlineKeyboardButton("💬 Contact Admin", url="https://t.me/@JaatSupreme")],
         [InlineKeyboardButton("🔄 Check Premium Status", callback_data="check_premium")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
